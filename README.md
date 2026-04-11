@@ -86,7 +86,8 @@ To build a complete, production-ready HMS + POS system that can compete with rea
 
 Thilina DS  
 Software Engineering Student  
-Sri Lanka 🇱🇰
+Sri Lanka 
+SlIIT UNDERGRAD
 
 ---
 
