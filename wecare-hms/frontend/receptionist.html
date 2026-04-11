@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WE CARE | Receptionist Dashboard</title>
+  <link rel="stylesheet" href="css/receptionist.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand-card">
+        <div class="brand-logo-wrap">
+          <img src="images/logo.png" alt="WE CARE Logo" class="brand-logo" />
+        </div>
+        <h1 class="brand-title">Receptionist Dashboard</h1>
+        <p class="brand-subtitle">Patient registration and appointment handling</p>
+      </div>
+
+      <nav class="sidebar-nav">
+        <button class="nav-btn active" data-target="section-add-patient" type="button">
+          <span class="nav-icon">＋</span>
+          <span>Add Patients</span>
+        </button>
+
+        <button class="nav-btn" data-target="section-patient-list" type="button">
+          <span class="nav-icon">☰</span>
+          <span>Patient List</span>
+        </button>
+
+        <button class="nav-btn" data-target="section-add-appointment" type="button">
+          <span class="nav-icon">📅</span>
+          <span>Add Appointment</span>
+        </button>
+
+        <button class="nav-btn" data-target="section-appointment-list" type="button">
+          <span class="nav-icon">🗂</span>
+          <span>Appointment List</span>
+        </button>
+      </nav>
+
+      <button class="logout-btn" id="logoutBtn" type="button">Logout</button>
+    </aside>
+
+    <main class="main-area">
+      <header class="topbar">
+        <div class="topbar-left">
+          <nav class="top-links">
+            <a href="#">Home</a>
+            <a href="#">Service</a>
+            <a href="#">About Us</a>
+            <a href="#">Contact Us</a>
+          </nav>
+        </div>
+        <div class="topbar-user">
+          <span class="user-role">Receptionist</span>
+          <div class="user-avatar">R</div>
+        </div>
+      </header>
+
+      <section class="hero-banner">
+        <div class="hero-overlay">
+          <h2>Welcome to WE CARE</h2>
+          <p>Manage patients, appointments, pricing, and visit flow from one place.</p>
+        </div>
+      </section>
+
+      <div class="content-wrap">
+        <!-- Add Patient -->
+        <section id="section-add-patient" class="content-section active-section">
+          <div class="panel">
+            <div class="panel-header panel-header-space">
+              <div>
+                <h3>Add Patient</h3>
+                <p>Register a patient with ID generation, photo, validation, and printable card.</p>
+              </div>
+              <div class="generated-chip">
+                Patient ID: <strong id="generatedPatientId">Auto generated on save</strong>
+              </div>
+            </div>
+
+            <form id="patientForm" class="form-grid" novalidate>
+              <input type="hidden" id="editingPatientId" />
+
+              <div class="form-group">
+                <label for="nic">NIC / Passport</label>
+                <input id="nic" type="text" placeholder="Enter NIC or passport" />
+                <small class="field-error" id="nicError"></small>
+              </div>
+
+              <div class="form-group">
+                <label for="fullName">Full Name</label>
+                <input id="fullName" type="text" placeholder="Enter full name" />
+                <small class="field-error" id="fullNameError"></small>
+              </div>
+
+              <div class="form-group">
+                <label for="emailAddress">Email</label>
+                <input id="emailAddress" type="email" placeholder="Enter email" />
+                <small class="field-error" id="emailError"></small>
+              </div>
+
+              <div class="form-group">
+                <label for="dob">Date of Birth</label>
+                <input id="dob" type="date" />
+                <small class="field-error" id="dobError"></small>
+              </div>
+
+<div class="form-group">
+                <label for="gender">Gender</label>
+                <select id="gender">
+                  <option value="">Select gender</option>
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                  <option value="Other">Other</option>
+                </select>
+                <small class="field-error" id="genderError"></small>
+              </div>
+
+              <div class="form-group">
+                <label for="phone">Phone</label>
+                <input id="phone" type="text" placeholder="07XXXXXXXX" maxlength="10" />
+                <small class="field-error" id="phoneError"></small>
+              </div>
+
+              <div class="form-group form-group-full">
+                <label for="address">Address</label>
+                <input id="address" type="text" placeholder="Enter address" />
+                <small class="field-error" id="addressError"></small>
+              </div>
+
+              <div class="form-group">
+                <label for="emergencyContact">Emergency Contact</label>
+                <input id="emergencyContact" type="text" placeholder="07XXXXXXXX" maxlength="10" />
+                <small class="field-error" id="emergencyContactError"></small>
+              </div>
+
+              <div class="form-group">
+                <label for="bloodGroup">Blood Group</label>
+                <select id="bloodGroup">
+                  <option value="">Select blood group</option>
+                  <option value="A+">A+</option>
+                  <option value="A-">A-</option>
+                  <option value="B+">B+</option>
+                  <option value="B-">B-</option>
+                  <option value="AB+">AB+</option>
+                  <option value="AB-">AB-</option>
+                  <option value="O+">O+</option>
+                  <option value="O-">O-</option>
+                </select>
+                <small class="field-error" id="bloodGroupError"></small>
+              </div>
+
+              <div class="form-group form-group-full">
+                <label for="medicalNotes">Medical Notes / Allergies</label>
+                <textarea id="medicalNotes" rows="3" placeholder="Enter allergy info, chronic conditions, or notes"></textarea>
+                <small class="field-error" id="medicalNotesError"></small>
+              </div>
+
+              <div class="form-group">
+                <label for="patientPhoto">Upload Photo</label>
+                <input id="patientPhoto" type="file" accept="image/*" />
+                <small class="field-error" id="patientPhotoError"></small>
+              </div>
+
+              <div class="form-group">
+                <label>Live Camera Capture</label>
+                <div class="camera-actions">
+                  <button class="btn btn-secondary small-btn" id="startCameraBtn" type="button">Start Camera</button>
+                  <button class="btn btn-secondary small-btn" id="capturePhotoBtn" type="button">Capture</button>
+                  <button class="btn btn-secondary small-btn" id="stopCameraBtn" type="button">Stop</button>
+                </div>
+              </div>
+
+              <div class="form-group form-group-full camera-box">
+                <video id="cameraPreview" autoplay playsinline></video>
+                <canvas id="cameraCanvas"></canvas>
+                <div class="photo-preview-wrap">
+                  <img id="patientPhotoPreview" alt="Patient preview" />
+                </div>
+              </div>
+            </form>
+
+            <div class="panel-footer">
+              <div class="action-group">
+                <button class="btn btn-primary" id="saveBtn" type="button">Save Patient</button>
+                <button class="btn btn-secondary" id="clearBtn" type="button">Clear</button>
+
+<button class="btn btn-secondary" id="printIdBtn" type="button">Print ID Card</button>
+              </div>
+              <p class="status-message" id="messageBox">Ready to add patient.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Patient List -->
+        <section id="section-patient-list" class="content-section">
+          <div class="panel">
+            <div class="panel-header panel-header-space">
+              <div>
+                <h3>Patient List</h3>
+                <p>View, search, edit, delete, and print patient cards.</p>
+              </div>
+              <div class="search-box">
+                <input id="patientSearchInput" type="text" placeholder="Search by patient ID, NIC, or name" />
+              </div>
+            </div>
+
+            <div class="table-wrap">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Patient ID</th>
+                    <th>Photo</th>
+                    <th>NIC</th>
+                    <th>Full Name</th>
+                    <th>DOB</th>
+                    <th>Gender</th>
+                    <th>Phone</th>
+                    <th>Emergency Contact</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="patientTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- Add Appointment -->
+        <section id="section-add-appointment" class="content-section">
+          <div class="panel">
+            <div class="panel-header">
+              <div>
+                <h3>Add Appointment</h3>
+                <p>Select patient, medical need, available doctor, free slot, and payment destination.</p>
+              </div>
+            </div>
+
+            <form id="appointmentForm" class="form-grid" novalidate>
+              <input type="hidden" id="editingAppointmentId" />
+
+              <div class="form-group form-group-full">
+                <label for="appointmentPatientSearch">Patient Search</label>
+                <input id="appointmentPatientSearch" type="text" placeholder="Search patient by ID, NIC, or name" list="patientSearchList" />
+                <datalist id="patientSearchList"></datalist>
+                <small class="field-error" id="appointmentPatientSearchError"></small>
+              </div>
+
+              <div class="form-group">
+                <label for="appointmentPatientId">Selected Patient</label>
+                <select id="appointmentPatientId">
+                  <option value="">Select patient</option>
+                </select>
+                <small class="field-error" id="appointmentPatientError"></small>
+              </div>
+
+              <div class="form-group">
+                <label for="casePriority">Case Priority</label>
+                <select id="casePriority">
+                  <option value="">Select priority</option>
+                  <option value="OPD">OPD / Normal</option>
+                  <option value="SPECIALIST">Specialist</option>
+                  <option value="EMERGENCY">Emergency</option>
+                </select>
+                <small class="field-error" id="casePriorityError"></small>
+              </div>
+
+              <div class="form-group">
+                <label for="medicalNeed">Medical Need / Area</label>
+                <select id="medicalNeed">
+                  <option value="">Select medical area</option>
+                  <option value="General Medicine">General Medicine</option>
+                  <option value="Cardiology">Cardiology</option>
+                  <option value="Dermatology">Dermatology</option>
+                  <option value="Neurology">Neurology</option>
+                  <option value="Orthopedics">Orthopedics</option>
+
+<option value="Pediatrics">Pediatrics</option>
+                  <option value="ENT">ENT</option>
+                  <option value="Gynecology">Gynecology</option>
+                  <option value="Emergency Medicine">Emergency Medicine</option>
+                </select>
+                <small class="field-error" id="medicalNeedError"></small>
+              </div>
+
+              <div class="form-group">
+                <label for="appointmentReason">Reason / Symptoms</label>
+                <input id="appointmentReason" type="text" placeholder="e.g. chest pain, skin rash" />
+                <small class="field-error" id="appointmentReasonError"></small>
+              </div>
+
+              <div class="form-group">
+                <label for="doctorSearch">Doctor Search</label>
+                <input id="doctorSearch" type="text" placeholder="Search available doctor" list="doctorSearchList" />
+                <datalist id="doctorSearchList"></datalist>
+                <small class="field-error" id="doctorSearchError"></small>
+              </div>
+
+              <div class="form-group">
+                <label for="doctorSelect">Available Doctors</label>
+                <select id="doctorSelect">
+                  <option value="">Select doctor</option>
+                </select>
+                <small class="field-error" id="doctorSelectError"></small>
+              </div>
+
+              <div class="form-group">
+                <label for="appointmentDate">Appointment Date</label>
+                <input id="appointmentDate" type="date" />
+                <small class="field-error" id="appointmentDateError"></small>
+              </div>
+
+              <div class="form-group">
+                <label for="appointmentTime">Available Time Slot</label>
+                <select id="appointmentTime">
+                  <option value="">Select time slot</option>
+                </select>
+                <small class="field-error" id="appointmentTimeError"></small>
+              </div>
+
+              <div class="form-group">
+                <label for="consultationFee">Consultation Fee (Auto)</label>
+                <input id="consultationFee" type="text" readonly />
+              </div>
+
+              <div class="form-group">
+                <label for="paymentRoute">Payment Route</label>
+                <select id="paymentRoute">
+                  <option value="">Select route</option>
+                  <option value="PAY_HERE">Pay Here</option>
+                  <option value="SEND_TO_POS">Send to Pharmacist POS</option>
+                </select>
+                <small class="field-error" id="paymentRouteError"></small>
+              </div>
+
+              <div class="form-group">
+                <label for="paymentMethod">Payment Method</label>
+                <select id="paymentMethod">
+                  <option value="">Select method</option>
+                  <option value="Cash">Cash</option>
+                  <option value="Card">Card</option>
+                  <option value="Online">Online</option>
+                </select>
+                <small class="field-error" id="paymentMethodError"></small>
+              </div>
+
+              <div class="form-group form-group-full">
+                <label for="appointmentStatus">Status</label>
+                <input id="appointmentStatus" type="text" value="BOOKED" readonly />
+              </div>
+            </form>
+
+            <div class="panel-footer">
+              <div class="action-group">
+                <button class="btn btn-primary" id="appointmentSaveBtn" type="button">Save Appointment</button>
+                <button class="btn btn-secondary" id="appointmentClearBtn" type="button">Clear</button>
+              </div>
+              <p class="status-message" id="appointmentMessageBox">Ready to add appointment.</p>
+            </div>
+          </div>
+        </section>
+
+<!-- Appointment List -->
+        <section id="section-appointment-list" class="content-section">
+          <div class="panel">
+            <div class="panel-header panel-header-space">
+              <div>
+                <h3>Appointment List</h3>
+                <p>View, search, edit, cancel, and monitor visit charges.</p>
+              </div>
+              <div class="search-box">
+                <input id="appointmentSearchInput" type="text" placeholder="Search by patient or doctor" />
+              </div>
+            </div>
+
+            <div class="table-wrap">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Appointment ID</th>
+                    <th>Patient</th>
+                    <th>Doctor</th>
+                    <th>Type</th>
+                    <th>Need</th>
+                    <th>Date</th>
+                    <th>Time</th>
+                    <th>Fee</th>
+                    <th>Payment Route</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="appointmentTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <div id="printCardWrap" class="print-only-wrap">
+    <div class="patient-id-sheet">
+      <!-- Front -->
+      <div class="patient-id-card front-card">
+        <div class="card-top">
+          <div class="card-brand">
+            <div class="card-logo-circle">WC</div>
+            <div>
+              <h2>WE CARE</h2>
+              <p>PATIENT ID CARD</p>
+            </div>
+          </div>
+          <div class="card-id-block">
+            <span>ID</span>
+            <strong id="cardPatientId">PAT-001</strong>
+          </div>
+        </div>
+
+        <div class="card-body">
+          <div class="card-left">
+            <img id="cardPhoto" src="" alt="Patient Photo" class="card-photo" />
+          </div>
+
+          <div class="card-right">
+            <div class="info-row">
+              <span class="label">Full Name</span>
+              <strong id="cardName">Patient Name</strong>
+            </div>
+
+            <div class="info-row">
+              <span class="label">NIC / Passport</span>
+              <strong id="cardNic">000000000V</strong>
+            </div>
+
+            <div class="info-grid">
+              <div class="info-row">
+                <span class="label">DOB</span>
+                <strong id="cardDob">2000-01-01</strong>
+              </div>
+
+              <div class="info-row">
+                <span class="label">Gender</span>
+                <strong id="cardGender">Male</strong>
+              </div>
+
+              <div class="info-row">
+                <span class="label">Blood Group</span>
+                <strong id="cardBlood">O+</strong>
+              </div>
+
+              <div class="info-row">
+                <span class="label">Phone</span>
+                <strong id="cardPhone">0771234567</strong>
+              </div>
+            </div>
+
+            <div class="info-row">
+              <span class="label">Address</span>
+              <strong id="cardAddress">Colombo</strong>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-bottom">
+          <div>
+            <span class="bottom-label">Emergency Contact</span>
+            <strong id="cardEmergency">0770000000</strong>
+          </div>
+          <div>
+            <span class="bottom-label">Issued</span>
+            <strong id="cardIssuedDate">2026-04-01</strong>
+          </div>
+        </div>
+      </div>
+
+      <!-- Back -->
+      <div class="patient-id-card back-card">
+        <div class="back-top-band"></div>
+
+        <div class="back-body">
+          <div class="signature-box">
+            <span>AUTHORIZED SIGNATURE</span>
+            <div class="signature-line"></div>
+          </div>
+
+          <div class="back-grid">
+            <div class="back-left">
+              <div class="instruction-box">
+                Present this card during registration, appointments, billing, and pharmacy services.
+              </div>
+
+              <div class="back-code-row">
+                <span>Patient Access Code</span>
+                <strong id="cardAccessCode">WC-PAT-001</strong>
+              </div>
+
+              <div class="back-notes">
+                <p><strong>Medical Notes:</strong></p>
+                <p id="cardMedicalNotes">No special notes</p>
+              </div>
+
+              <div class="back-brand">
+                <div class="card-logo-circle small">WC</div>
+                <div>
+                  <h3>WE CARE</h3>
+                  <p>Integrated Healthcare System</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="back-right">
+              <div class="qr-box">
+                <div class="fake-qr" id="fakeQrCode">PAT-001</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/receptionist.js"></script>
+</body>
+</html>

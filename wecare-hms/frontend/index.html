@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WE CARE | Login</title>
+  <link rel="stylesheet" href="css/login.css" />
+</head>
+<body>
+  <div class="login-shell">
+    <header class="login-topbar">
+      <div class="top-links">
+        <a href="#">Home</a>
+        <a href="#">Service</a>
+        <a href="#">About Us</a>
+        <a href="#">Contact Us</a>
+      </div>
+    </header>
+
+    <section class="login-hero">
+      <div class="hero-overlay">
+        <div class="hero-logo-card">
+          <img src="images/logo.png" alt="WE CARE Logo" class="hero-logo" />
+        </div>
+      </div>
+    </section>
+
+    <main class="login-content">
+      <div class="login-card">
+        <div class="login-header">
+          <h1>WE CARE Staff Login</h1>
+          <p>Select your role and sign in to access your dashboard.</p>
+        </div>
+
+        <div class="role-tabs">
+          <button class="role-btn active" data-role="doctor" type="button">Doctor</button>
+          <button class="role-btn" data-role="pharmacist" type="button">Pharmacist</button>
+          <button class="role-btn" data-role="receptionist" type="button">Receptionist</button>
+          <button class="role-btn" data-role="admin" type="button">Admin</button>
+        </div>
+
+        <form id="loginForm" class="login-form" novalidate>
+          <div class="form-group">
+            <label for="username">Username / Medical ID</label>
+            <input id="username" type="text" placeholder="Enter username or medical ID" />
+          </div>
+
+          <div class="form-group">
+            <label for="password">Password</label>
+            <input id="password" type="password" placeholder="Enter password" />
+          </div>
+
+          <div class="login-actions">
+            <button class="btn btn-primary" id="loginBtn" type="submit">Login</button>
+          </div>
+
+          <p id="loginMessage" class="status-message">Enter credentials to continue.</p>
+        </form>
+
+        <div class="demo-box">
+          <h3>Demo Credentials</h3>
+          <ul>
+            <li><strong>Doctor:</strong> doctor / 123</li>
+            <li><strong>Pharmacist:</strong> pharmacist / 123</li>
+            <li><strong>Receptionist:</strong> receptionist / 123</li>
+            <li><strong>Admin:</strong> admin / 123</li>
+          </ul>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="js/login.js"></script>
+</body>
+</html>

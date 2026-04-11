@@ -1,0 +1,517 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WE CARE | Admin Dashboard</title>
+  <link rel="stylesheet" href="css/admin.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand-card">
+        <div class="brand-logo-wrap">
+          <img src="images/logo.png" alt="WE CARE Logo" class="brand-logo" />
+        </div>
+        <h1 class="brand-title">Admin Dashboard</h1>
+        <p class="brand-subtitle">System control, reports, users, doctors, stock, and analytics</p>
+      </div>
+
+      <nav class="sidebar-nav">
+        <button class="nav-btn active" data-target="section-overview" type="button">
+          <span class="nav-icon">📊</span>
+          <span>Overview</span>
+        </button>
+
+        <button class="nav-btn" data-target="section-users" type="button">
+          <span class="nav-icon">👥</span>
+          <span>User Management</span>
+        </button>
+
+        <button class="nav-btn" data-target="section-doctors" type="button">
+          <span class="nav-icon">🩺</span>
+          <span>Doctor Management</span>
+        </button>
+
+        <button class="nav-btn" data-target="section-stock" type="button">
+          <span class="nav-icon">💊</span>
+          <span>Stock Monitor</span>
+        </button>
+
+        <button class="nav-btn" data-target="section-appointments" type="button">
+          <span class="nav-icon">📅</span>
+          <span>Appointments</span>
+        </button>
+
+        <button class="nav-btn" data-target="section-reports" type="button">
+          <span class="nav-icon">📈</span>
+          <span>Reports & Graphs</span>
+        </button>
+      </nav>
+
+      <button class="logout-btn" id="logoutBtn" type="button">Logout</button>
+    </aside>
+
+    <main class="main-area">
+      <header class="topbar">
+        <div class="topbar-left">
+          <nav class="top-links">
+            <a href="#">Home</a>
+            <a href="#">Service</a>
+            <a href="#">About Us</a>
+            <a href="#">Contact Us</a>
+          </nav>
+        </div>
+        <div class="topbar-user">
+          <span class="user-role">Admin</span>
+          <div class="user-avatar">A</div>
+        </div>
+      </header>
+
+      <section class="hero-banner">
+        <div class="hero-overlay">
+          <h2>System Control Center</h2>
+          <p>Manage roles, doctors, reports, stock, and performance metrics.</p>
+        </div>
+      </section>
+
+      <div class="content-wrap">
+
+        <!-- Overview -->
+        <section id="section-overview" class="content-section active-section">
+          <div class="overview-grid">
+            <div class="metric-card">
+              <span class="metric-label">Total Users</span>
+              <strong id="metricUsers">0</strong>
+            </div>
+            <div class="metric-card">
+              <span class="metric-label">Doctors</span>
+              <strong id="metricDoctors">0</strong>
+            </div>
+            <div class="metric-card">
+              <span class="metric-label">Appointments</span>
+              <strong id="metricAppointments">0</strong>
+            </div>
+            <div class="metric-card">
+              <span class="metric-label">Total Revenue</span>
+              <strong id="metricRevenue">0.00</strong>
+            </div>
+          </div>
+
+          <div class="panel-grid">
+            <div class="panel">
+              <div class="panel-header">
+                <h3>Recent Activity</h3>
+                <p>Latest important actions in the system</p>
+              </div>
+              <div class="activity-list" id="activityList"></div>
+            </div>
+
+            <div class="panel">
+              <div class="panel-header">
+                <h3>Quick Alerts</h3>
+                <p>Important issues requiring attention</p>
+              </div>
+              <div class="alerts-list" id="alertsList"></div>
+            </div>
+          </div>
+        </section>
+
+
+<!-- User Management -->
+        <section id="section-users" class="content-section">
+          <div class="panel">
+            <div class="panel-header">
+              <h3>User Management</h3>
+              <p>Admin-only creation of staff accounts with auto-generated ID and temporary password.</p>
+            </div>
+
+            <form id="userForm" class="form-grid" novalidate>
+              <input type="hidden" id="editingUserId" />
+
+              <div class="form-group">
+                <label for="userName">Full Name</label>
+                <input id="userName" type="text" placeholder="Enter full name" />
+                <small class="field-error" id="userNameError"></small>
+              </div>
+
+              <div class="form-group">
+                <label for="userEmail">Email</label>
+                <input id="userEmail" type="email" placeholder="Enter email" />
+                <small class="field-error" id="userEmailError"></small>
+              </div>
+
+              <div class="form-group">
+                <label for="userPhone">Phone Number</label>
+                <input id="userPhone" type="text" placeholder="07XXXXXXXX" maxlength="10" />
+                <small class="field-error" id="userPhoneError"></small>
+              </div>
+
+              <div class="form-group">
+                <label for="userRole">Role</label>
+                <select id="userRole">
+                  <option value="">Select role</option>
+                  <option value="ADMIN">Admin</option>
+                  <option value="RECEPTIONIST">Receptionist</option>
+                  <option value="DOCTOR">Doctor</option>
+                  <option value="PHARMACIST">Pharmacist</option>
+                </select>
+                <small class="field-error" id="userRoleError"></small>
+              </div>
+
+              <div class="form-group">
+                <label for="userStatus">Status</label>
+                <select id="userStatus">
+                  <option value="">Select status</option>
+                  <option value="ACTIVE">Active</option>
+                  <option value="INACTIVE">Inactive</option>
+                </select>
+                <small class="field-error" id="userStatusError"></small>
+              </div>
+
+              <div class="form-group generated-box">
+                <label>Generated Credentials</label>
+                <div class="generated-fields">
+                  <div><strong>Staff ID:</strong> <span id="generatedStaffId">Will generate on save</span></div>
+                  <div><strong>Temporary Password:</strong> <span id="generatedPassword">Will generate on save</span></div>
+                </div>
+              </div>
+            </form>
+
+            <div class="panel-footer">
+              <div class="action-group">
+                <button class="btn btn-primary" id="saveUserBtn" type="button">Save User</button>
+                <button class="btn btn-secondary" id="clearUserBtn" type="button">Clear</button>
+                <button class="btn btn-secondary" id="printIdBadgeBtn" type="button">Print ID Badge</button>
+              </div>
+              <p class="status-message" id="userMessageBox">Ready to manage users.</p>
+            </div>
+
+            <div class="table-wrap">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Staff ID</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>Role</th>
+                    <th>Status</th>
+                    <th>Temporary Password</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="userTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- Doctor Management -->
+        <section id="section-doctors" class="content-section">
+          <div class="panel">
+            <div class="panel-header">
+              <h3>Doctor Management</h3>
+              <p>Add and manage doctor profiles with strong validation and searchable specialization selection.</p>
+            </div>
+
+
+<form id="doctorForm" class="form-grid" novalidate>
+              <input type="hidden" id="editingDoctorId" />
+
+              <div class="form-group">
+                <label for="doctorFullName">Doctor Name</label>
+                <input id="doctorFullName" type="text" placeholder="Enter doctor name" />
+                <small class="field-error" id="doctorNameError"></small>
+              </div>
+
+              <div class="form-group">
+                <label for="doctorSpecialization">Specialization</label>
+                <input id="doctorSpecialization" type="text" list="specializationList" placeholder="Search or select specialization" />
+                <datalist id="specializationList"></datalist>
+                <small class="field-error" id="doctorSpecializationError"></small>
+              </div>
+
+              <div class="form-group">
+                <label for="doctorLicense">License Number</label>
+                <input id="doctorLicense" type="text" placeholder="Enter license number" />
+                <small class="field-error" id="doctorLicenseError"></small>
+              </div>
+
+              <div class="form-group">
+                <label for="doctorEmail">Email</label>
+                <input id="doctorEmail" type="email" placeholder="doctor@wecare.com" />
+                <small class="field-error" id="doctorEmailError"></small>
+              </div>
+
+              <div class="form-group">
+                <label for="doctorPhone">Phone Number</label>
+                <input id="doctorPhone" type="text" placeholder="07XXXXXXXX" maxlength="10" />
+                <small class="field-error" id="doctorPhoneError"></small>
+              </div>
+
+              <div class="form-group">
+                <label for="doctorRoom">Room Number</label>
+                <input id="doctorRoom" type="text" placeholder="e.g. A12" />
+                <small class="field-error" id="doctorRoomError"></small>
+              </div>
+
+              <div class="form-group">
+                <label for="doctorExperience">Experience (Years)</label>
+                <input id="doctorExperience" type="number" min="0" max="60" placeholder="e.g. 8" />
+                <small class="field-error" id="doctorExperienceError"></small>
+              </div>
+
+              <div class="form-group">
+                <label for="doctorSchedule">Schedule</label>
+                <input id="doctorSchedule" type="text" placeholder="e.g. Mon-Fri 9AM-2PM" />
+                <small class="field-error" id="doctorScheduleError"></small>
+              </div>
+            </form>
+
+            <div class="panel-footer">
+              <div class="action-group">
+                <button class="btn btn-primary" id="saveDoctorBtn" type="button">Save Doctor</button>
+                <button class="btn btn-secondary" id="clearDoctorBtn" type="button">Clear</button>
+              </div>
+              <p class="status-message" id="doctorMessageBox">Ready to manage doctors.</p>
+            </div>
+
+            <div class="table-wrap">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Doctor ID</th>
+                    <th>Name</th>
+                    <th>Specialization</th>
+                    <th>License</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>Room</th>
+                    <th>Experience</th>
+                    <th>Schedule</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="doctorTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- Stock -->
+        <section id="section-stock" class="content-section">
+          <div class="panel">
+            <div class="panel-header">
+              <h3>Stock Monitoring</h3>
+              <p>Admin can create, update, and delete stock items for better supervision.</p>
+            </div>
+
+
+<form id="stockForm" class="form-grid" novalidate>
+              <input type="hidden" id="editingStockId" />
+
+              <div class="form-group">
+                <label for="stockName">Item Name</label>
+                <input id="stockName" type="text" placeholder="Enter item name" />
+                <small class="field-error" id="stockNameError"></small>
+              </div>
+
+              <div class="form-group">
+                <label for="stockType">Type</label>
+                <select id="stockType">
+                  <option value="">Select type</option>
+                  <option value="MEDICINE">Medicine</option>
+                  <option value="LAB_TEST">Lab Test</option>
+                  <option value="SERVICE">Service</option>
+                </select>
+                <small class="field-error" id="stockTypeError"></small>
+              </div>
+
+              <div class="form-group">
+                <label for="stockPrice">Price</label>
+                <input id="stockPrice" type="number" min="0" step="0.01" placeholder="0.00" />
+                <small class="field-error" id="stockPriceError"></small>
+              </div>
+
+              <div class="form-group">
+                <label for="stockQty">Stock Quantity</label>
+                <input id="stockQty" type="number" min="0" placeholder="0" />
+                <small class="field-error" id="stockQtyError"></small>
+              </div>
+            </form>
+
+            <div class="panel-footer">
+              <div class="action-group">
+                <button class="btn btn-primary" id="saveStockBtn" type="button">Save Item</button>
+                <button class="btn btn-secondary" id="clearStockBtn" type="button">Clear</button>
+              </div>
+              <p class="status-message" id="stockMessageBox">Ready to manage stock.</p>
+            </div>
+
+            <div class="table-wrap">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Item ID</th>
+                    <th>Item</th>
+                    <th>Type</th>
+                    <th>Price</th>
+                    <th>Stock</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="stockTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- Appointments -->
+        <section id="section-appointments" class="content-section">
+          <div class="panel">
+            <div class="panel-header">
+              <h3>Appointments Overview</h3>
+              <p>Monitor all scheduled patient appointments</p>
+            </div>
+
+            <div class="table-wrap">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Patient</th>
+                    <th>Doctor</th>
+                    <th>Date</th>
+                    <th>Time</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="appointmentTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- Reports -->
+        <section id="section-reports" class="content-section">
+          <div class="panel reports-panel">
+            <div class="panel-header">
+              <h3>Reports & Analytics</h3>
+              <p>Revenue, sales trends, and system performance</p>
+            </div>
+
+            <div class="charts-grid">
+              <div class="chart-card">
+                <h4>Revenue Graph</h4>
+                <canvas id="revenueChart"></canvas>
+              </div>
+
+              <div class="chart-card">
+                <h4>Sales Graph</h4>
+                <canvas id="salesChart"></canvas>
+              </div>
+            </div>
+
+
+<div class="table-wrap">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Invoice ID</th>
+                    <th>Patient</th>
+                    <th>Date</th>
+                    <th>Method</th>
+                    <th>Total</th>
+                  </tr>
+                </thead>
+                <tbody id="reportInvoiceTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </main>
+  </div>
+
+  <!-- Print Badge Modal -->
+  <div id="printBadgeModal" class="modal-overlay">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3>Print Employee ID Badge</h3>
+        <button class="modal-close" id="closePrintBadgeModal" type="button">&times;</button>
+      </div>
+      <div class="modal-body">
+        <label for="badgeStaffIdInput">Enter Employee Staff ID:</label>
+        <input 
+          id="badgeStaffIdInput" 
+          type="text" 
+          placeholder="e.g., ADM-001, REC-002" 
+          autocomplete="off"
+        />
+        <small id="badgeStaffIdError" class="field-error"></small>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-primary" id="printBadgeConfirmBtn" type="button">Print Badge</button>
+        <button class="btn btn-secondary" id="cancelPrintBadgeBtn" type="button">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Employee ID Badge Print Wrapper -->
+  <div id="printBadgeWrap" class="print-badge-wrap">
+    <div class="employee-badge-sheet">
+      <!-- Employee ID Badge -->
+      <div class="employee-id-badge">
+        <div class="badge-top-section">
+          <div class="badge-logo-area">
+            <img src="images/logo.png" alt="WE CARE Logo" class="badge-logo" />
+          </div>
+          <div class="badge-company-name">WE CARE</div>
+        </div>
+
+        <div class="badge-middle-section">
+          <div class="badge-info-block">
+            <div class="badge-field">
+              <span class="badge-label">Employee ID</span>
+              <strong id="badgeEmployeeId">ADM-001</strong>
+            </div>
+
+            <div class="badge-field">
+              <span class="badge-label">Name</span>
+              <strong id="badgeEmployeeName">Employee Name</strong>
+            </div>
+
+            <div class="badge-field">
+              <span class="badge-label">Role</span>
+              <strong id="badgeEmployeeRole">ADMIN</strong>
+            </div>
+
+            <div class="badge-field">
+              <span class="badge-label">Department</span>
+              <strong id="badgeEmployeeDept">Management</strong>
+            </div>
+
+            <div class="badge-field">
+              <span class="badge-label">Contact</span>
+              <strong id="badgeEmployeePhone">0771234567</strong>
+            </div>
+          </div>
+        </div>
+
+        <div class="badge-bottom-section">
+          <div class="badge-footer-text">
+            <p>This badge is valid as long as the employee is active</p>
+            <p class="badge-footer-date">Issued: <span id="badgeIssuedDate">2026-04-01</span></p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/admin.js"></script>
+</body>
+</html>

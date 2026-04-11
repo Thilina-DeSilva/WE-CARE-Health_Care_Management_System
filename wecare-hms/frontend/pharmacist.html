@@ -1,0 +1,603 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WE CARE | Pharmacist & Laboratory Dashboard</title>
+  <link rel="stylesheet" href="css/pharmacist.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand-card">
+        <div class="brand-logo-wrap">
+          <img src="images/logo.png" alt="WE CARE Logo" class="brand-logo" />
+        </div>
+        <h1 class="brand-title">Pharmacist Dashboard</h1>
+        <p class="brand-subtitle">POS, laboratory, billing, payment, inventory, and reports</p>
+      </div>
+
+      <nav class="sidebar-nav">
+        <button class="nav-btn active" data-target="section-pos" type="button">
+          <span class="nav-icon">🧾</span>
+          <span>POS Billing</span>
+        </button>
+
+        <button class="nav-btn" data-target="section-receptionist-queue" type="button">
+          <span class="nav-icon">📥</span>
+          <span>From Receptionist</span>
+        </button>
+
+        <button class="nav-btn" data-target="section-lab-requests" type="button">
+          <span class="nav-icon">🧪</span>
+          <span>Lab Requests</span>
+        </button>
+
+        <button class="nav-btn" data-target="section-lab-reports" type="button">
+          <span class="nav-icon">📄</span>
+          <span>Lab Reports</span>
+        </button>
+
+        <button class="nav-btn" data-target="section-invoices" type="button">
+          <span class="nav-icon">📚</span>
+          <span>Invoice History</span>
+        </button>
+      </nav>
+
+      <button class="logout-btn" id="logoutBtn" type="button">Logout</button>
+    </aside>
+
+    <main class="main-area">
+      <header class="topbar">
+        <div class="topbar-left">
+          <nav class="top-links">
+            <a href="#">Home</a>
+            <a href="#">Services</a>
+            <a href="#">About Us</a>
+            <a href="#">Contact Us</a>
+          </nav>
+        </div>
+        <div class="topbar-user">
+          <span class="user-role">Pharmacist</span>
+          <div class="user-avatar">P</div>
+        </div>
+      </header>
+
+      <section class="hero-banner">
+        <div class="hero-overlay">
+          <h2>Billing and Laboratory Control Center</h2>
+          <p>Handle medicines, lab requests, lab reports, payments, receipts, and invoice history.</p>
+        </div>
+      </section>
+
+      <div class="content-wrap">
+        <!-- RECEPTIONIST QUEUE -->
+        <section id="section-receptionist-queue" class="content-section">
+          <div class="panel">
+            <div class="panel-header">
+              <h3>📥 Appointments From Receptionist</h3>
+              <p>Select a patient to auto-fill all appointment fields</p>
+            </div>
+
+            <div id="receptionist-queue-container" style="padding: 20px;">
+              <p style="color: #6b7280; text-align: center;">No pending appointments from reception.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- POS -->
+        <section id="section-pos" class="content-section active-section">
+          <div class="pos-layout">
+            <!-- Left -->
+            <div class="panel">
+              <div class="panel-header panel-header-space">
+                <div>
+                  <h3>Patient & Visit</h3>
+                  <p>Select patient and prepare the billing flow</p>
+                </div>
+                <div class="search-box">
+                  <input id="patientSearchInput" type="text" placeholder="Search by patient ID, NIC, or name" list="patientSearchList" />
+                  <datalist id="patientSearchList"></datalist>
+                </div>
+              </div>
+
+              <div class="form-grid compact-grid">
+                <div class="form-group form-group-full">
+                  <label for="posPatientSelect">Patient</label>
+                  <select id="posPatientSelect">
+                    <option value="">Select patient</option>
+                  </select>
+                  <small class="field-error" id="posPatientError"></small>
+                </div>
+
+                <div class="form-group">
+                  <label for="posVisitType">Visit Type</label>
+                  <select id="posVisitType">
+                    <option value="">Select visit type</option>
+                    <option value="OPD">OPD</option>
+                    <option value="SPECIALIST">Specialist</option>
+                    <option value="EMERGENCY">Emergency</option>
+                  </select>
+                  <small class="field-error" id="posVisitTypeError"></small>
+                </div>
+
+                <div class="form-group">
+                  <label for="posDoctorSelect">Doctor</label>
+                  <select id="posDoctorSelect">
+                    <option value="">Select doctor</option>
+                  </select>
+                  <small class="field-error" id="posDoctorError"></small>
+                </div>
+
+                <div class="form-group form-group-full">
+                  <div style="display: flex; gap: 8px; align-items: flex-end;">
+                    <div style="flex: 1;">
+                      <label for="consultationFee">Consultation Fee</label>
+                      <input id="consultationFee" type="text" readonly />
+                    </div>
+                    <button id="addConsultationFeeBtn" class="btn btn-primary" type="button" style="margin-bottom: 0; padding: 10px 16px;">Add Fee</button>
+                  </div>
+                </div>
+
+                <div class="form-group form-group-full">
+                  <label for="billingNote">Billing Note</label>
+                  <input id="billingNote" type="text" placeholder="Optional note" />
+                </div>
+              </div>
+
+              <div class="patient-quick-card" id="patientQuickCard">
+                <p>Select a patient to see quick details.</p>
+              </div>
+            </div>
+
+            <!-- Center -->
+            <div class="panel">
+              <div class="panel-header panel-header-space">
+                <div>
+                  <h3>Smart Cart</h3>
+                  <p>Add medicines, services, and approved lab charges</p>
+                </div>
+                <div class="search-box">
+                  <input id="itemSearchInput" type="text" placeholder="Search medicine/service/lab" list="itemSearchList" />
+                  <datalist id="itemSearchList"></datalist>
+                </div>
+              </div>
+
+              <div class="item-add-wrap">
+                <div class="form-grid compact-grid">
+                  <div class="form-group form-group-full">
+                    <label for="itemSelect">Billable Item</label>
+                    <select id="itemSelect">
+                      <option value="">Select item</option>
+                    </select>
+                    <small class="field-error" id="itemSelectError"></small>
+                  </div>
+
+                  <div class="form-group">
+                    <label for="itemQty">Quantity</label>
+                    <input id="itemQty" type="number" min="1" value="1" />
+                    <small class="field-error" id="itemQtyError"></small>
+                  </div>
+
+                  <div class="form-group">
+                    <label for="itemDiscount">Discount</label>
+                    <input id="itemDiscount" type="number" min="0" value="0" />
+                    <small class="field-error" id="itemDiscountError"></small>
+                  </div>
+
+                  <div class="form-group form-group-full">
+                    <label for="itemNote">Item Note</label>
+                    <input id="itemNote" type="text" placeholder="Optional item note" />
+                  </div>
+                </div>
+
+                <div class="panel-footer no-top-pad">
+                  <div class="action-group">
+                    <button class="btn btn-primary" id="addItemBtn" type="button">Add to Cart</button>
+                    <button class="btn btn-secondary" id="clearItemBtn" type="button">Clear Item</button>
+                  </div>
+                  <p class="status-message" id="cartMessageBox">Ready to add billable items.</p>
+                </div>
+              </div>
+
+              <div class="table-wrap">
+                <table class="data-table">
+                  <thead>
+                    <tr>
+                      <th>Item</th>
+                      <th>Type</th>
+                      <th>Qty</th>
+                      <th>Price</th>
+                      <th>Discount</th>
+                      <th>Total</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="cartTableBody"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Right -->
+            <div class="panel summary-panel">
+              <div class="panel-header">
+                <h3>Billing Summary</h3>
+                <p>Finalize payment and print receipt</p>
+              </div>
+
+              <div class="summary-box">
+                <div class="summary-row">
+                  <span>Subtotal</span>
+                  <strong id="subtotalText">Rs. 0.00</strong>
+                </div>
+                <div class="summary-row">
+                  <span>Total Discount</span>
+                  <strong id="discountText">Rs. 0.00</strong>
+                </div>
+                <div class="summary-row grand-total">
+                  <span>Grand Total</span>
+                  <strong id="grandTotalText">Rs. 0.00</strong>
+                </div>
+              </div>
+
+              <div class="form-grid one-col-grid">
+                <div class="form-group">
+                  <label for="paymentMethod">Payment Method</label>
+                  <select id="paymentMethod">
+                    <option value="">Select payment method</option>
+                    <option value="Cash">Cash</option>
+                    <option value="Card">Card</option>
+                    <option value="Online">Online</option>
+                    <option value="Split">Split</option>
+                  </select>
+                  <small class="field-error" id="paymentMethodError"></small>
+                </div>
+
+                <div class="form-group">
+                  <label for="amountPaid">Amount Paid</label>
+                  <input id="amountPaid" type="number" min="0" value="0" />
+                  <small class="field-error" id="amountPaidError"></small>
+                </div>
+
+                <div class="form-group">
+                  <label for="balanceText">Balance / Change</label>
+                  <input id="balanceText" type="text" readonly />
+                </div>
+              </div>
+
+              <div class="panel-footer stacked-footer">
+                <div class="action-group">
+                  <button class="btn btn-primary" id="saveInvoiceBtn" type="button">Save Invoice</button>
+                  <button class="btn btn-secondary" id="payNowBtn" type="button">Pay Now</button>
+                  <button class="btn btn-secondary" id="printReceiptBtn" type="button">Print Receipt</button>
+                  <button class="btn btn-danger" id="clearCartBtn" type="button">Clear Cart</button>
+                </div>
+                <p class="status-message" id="billingMessageBox">Ready to complete billing.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Lab Requests -->
+        <section id="section-lab-requests" class="content-section">
+          <div class="panel">
+            <div class="panel-header panel-header-space">
+              <div>
+                <h3>Laboratory Requests</h3>
+                <p>Create and manage patient lab requests separately from POS</p>
+              </div>
+              <div class="search-box">
+                <input id="labRequestSearchInput" type="text" placeholder="Search by request, patient, or test" />
+              </div>
+            </div>
+
+            <form id="labRequestForm" class="form-grid" novalidate>
+              <input type="hidden" id="editingLabRequestId" />
+
+              <div class="form-group">
+                <label for="labPatientSelect">Patient</label>
+                <select id="labPatientSelect">
+                  <option value="">Select patient</option>
+                </select>
+                <small class="field-error" id="labPatientError"></small>
+              </div>
+
+              <div class="form-group">
+                <label for="labDoctorSelect">Requested By Doctor</label>
+                <select id="labDoctorSelect">
+                  <option value="">Select doctor</option>
+                </select>
+                <small class="field-error" id="labDoctorError"></small>
+              </div>
+
+              <div class="form-group">
+                <label for="labTestSelect">Lab Test</label>
+                <select id="labTestSelect">
+                  <option value="">Select lab test</option>
+                </select>
+                <small class="field-error" id="labTestError"></small>
+              </div>
+
+              <div class="form-group">
+                <label for="labRequestStatus">Status</label>
+                <select id="labRequestStatus">
+                  <option value="PENDING">PENDING</option>
+                  <option value="IN_PROGRESS">IN_PROGRESS</option>
+                  <option value="COMPLETED">COMPLETED</option>
+                  <option value="CANCELLED">CANCELLED</option>
+                </select>
+              </div>
+
+              <div class="form-group form-group-full">
+                <label for="labClinicalNote">Clinical Note</label>
+                <input id="labClinicalNote" type="text" placeholder="Reason for test / doctor note" />
+              </div>
+            </form>
+
+            <div class="panel-footer">
+              <div class="action-group">
+                <button class="btn btn-primary" id="saveLabRequestBtn" type="button">Save Lab Request</button>
+                <button class="btn btn-secondary" id="clearLabRequestBtn" type="button">Clear</button>
+                <button class="btn btn-secondary" id="sendLabChargeToPosBtn" type="button">Send Test Charge to POS</button>
+              </div>
+              <p class="status-message" id="labRequestMessageBox">Ready to manage lab requests.</p>
+            </div>
+
+            <div class="table-wrap">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Request ID</th>
+                    <th>Patient</th>
+                    <th>Doctor</th>
+                    <th>Test</th>
+                    <th>Price</th>
+                    <th>Status</th>
+                    <th>Clinical Note</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="labRequestTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- Lab Reports -->
+        <section id="section-lab-reports" class="content-section">
+          <div class="panel">
+            <div class="panel-header panel-header-space">
+              <div>
+                <h3>Laboratory Reports</h3>
+                <p>Enter results, complete reports, and print them professionally</p>
+              </div>
+              <div class="search-box">
+                <input id="labReportSearchInput" type="text" placeholder="Search by request or patient" />
+              </div>
+            </div>
+
+            <form id="labReportForm" class="form-grid" novalidate>
+              <input type="hidden" id="editingLabReportId" />
+
+              <div class="form-group">
+                <label for="labReportRequestSelect">Completed Request</label>
+                <select id="labReportRequestSelect">
+                  <option value="">Select completed or in-progress request</option>
+                </select>
+                <small class="field-error" id="labReportRequestError"></small>
+              </div>
+
+              <div class="form-group">
+                <label for="labTechnicianName">Lab Technician</label>
+                <input id="labTechnicianName" type="text" placeholder="Enter technician name" />
+                <small class="field-error" id="labTechnicianError"></small>
+              </div>
+
+              <div class="form-group form-group-full">
+                <label for="labResultText">Result Summary</label>
+                <textarea id="labResultText" rows="3" placeholder="Enter lab findings"></textarea>
+                <small class="field-error" id="labResultTextError"></small>
+              </div>
+
+              <div class="form-group form-group-full">
+                <label for="labNormalRange">Normal Range / Unit</label>
+                <input id="labNormalRange" type="text" placeholder="e.g. 70-110 mg/dL" />
+                <small class="field-error" id="labNormalRangeError"></small>
+              </div>
+
+              <div class="form-group form-group-full">
+                <label for="labRemarks">Remarks</label>
+                <textarea id="labRemarks" rows="3" placeholder="Additional remarks"></textarea>
+              </div>
+            </form>
+
+            <div class="panel-footer">
+              <div class="action-group">
+                <button class="btn btn-primary" id="saveLabReportBtn" type="button">Save Lab Report</button>
+                <button class="btn btn-secondary" id="clearLabReportBtn" type="button">Clear</button>
+                <button class="btn btn-secondary" id="printLabReportBtn" type="button">Print Lab Report</button>
+              </div>
+              <p class="status-message" id="labReportMessageBox">Ready to create reports.</p>
+            </div>
+
+            <div class="table-wrap">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Report ID</th>
+                    <th>Request ID</th>
+                    <th>Patient</th>
+                    <th>Test</th>
+                    <th>Technician</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="labReportTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- Invoices -->
+        <section id="section-invoices" class="content-section">
+          <div class="panel">
+            <div class="panel-header panel-header-space">
+              <div>
+                <h3>Invoice History</h3>
+                <p>View all invoices and payments</p>
+              </div>
+              <div class="search-box">
+                <input id="invoiceSearchInput" type="text" placeholder="Search by invoice or patient" />
+              </div>
+            </div>
+
+            <div class="table-wrap">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Invoice ID</th>
+                    <th>Patient</th>
+                    <th>Date</th>
+                    <th>Total</th>
+                    <th>Paid</th>
+                    <th>Method</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody id="invoiceTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <!-- Receipt Print -->
+  <div id="receiptPrintWrap" class="print-wrap">
+    <div class="receipt-card">
+      <div class="receipt-header">
+        <div class="receipt-logo-wrap">
+          <img src="images/logo.png" alt="WE CARE Logo" class="receipt-logo" />
+        </div>
+        <h2>WE CARE HEALTHCARE SYSTEM</h2>
+        <p style="margin: 4px 0; font-weight: 600;">Pharmacy & Consultation Receipt</p>
+        <p style="font-size: 11px; color: #666; margin: 4px 0;">Colombo, Sri Lanka | 📞 0771234567</p>
+        <p style="font-size: 11px; color: #666; margin: 0;">📧 pharmacy@wecare.com | Website: www.wecare.lk</p>
+      </div>
+
+      <div class="receipt-divider"></div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; font-size: 12px; margin-bottom: 12px;">
+        <div>
+          <p style="margin: 0;"><strong>Invoice Details</strong></p>
+          <p style="margin: 4px 0;">Invoice ID: <span id="printInvoiceId" style="font-weight: 600;"></span></p>
+          <p style="margin: 4px 0;">Date: <span id="printInvoiceDate"></span></p>
+          <p style="margin: 0;">Status: <span id="printInvoiceStatus" style="background: #d1fae5; padding: 2px 8px; border-radius: 4px;"></span></p>
+        </div>
+        <div>
+          <p style="margin: 0;"><strong>Patient Information</strong></p>
+          <p style="margin: 4px 0;">Patient: <span id="printPatientName" style="font-weight: 600;"></span></p>
+          <p style="margin: 4px 0;">Doctor: <span id="printDoctorName"></span></p>
+          <p style="margin: 0;">Visit Type: <span id="printVisitType"></span></p>
+        </div>
+      </div>
+
+      <div class="receipt-divider"></div>
+
+      <div style="font-size: 12px; margin-bottom: 8px;">
+        <p style="margin: 0 0 8px 0; font-weight: 600;">ITEMIZED CHARGES</p>
+        <table class="print-table" style="font-size: 11px;">
+          <thead>
+            <tr>
+              <th style="text-align: left; width: 50%;">Description</th>
+              <th style="text-align: center; width: 15%;">Qty</th>
+              <th style="text-align: right; width: 20%;">Unit Price</th>
+              <th style="text-align: right; width: 15%;">Amount</th>
+            </tr>
+          </thead>
+          <tbody id="printReceiptItems"></tbody>
+        </table>
+      </div>
+
+      <div class="receipt-divider"></div>
+
+      <div style="display: grid; grid-template-columns: 1fr 200px; gap: 16px; font-size: 12px;">
+        <div>
+          <p style="margin: 0; font-size: 11px;"><strong>Payment Details</strong></p>
+          <p style="margin: 4px 0; font-size: 11px;">Payment Method: <span id="printPaymentMethod" style="font-weight: 600;"></span></p>
+          <p style="margin: 0; font-size: 11px;">Reference: <span id="printPaymentRef">POS-Receipt</span></p>
+        </div>
+        <div style="border-left: 1px solid #d1d5db; padding-left: 12px;">
+          <div style="display: flex; justify-content: space-between; margin: 4px 0;">
+            <span>Subtotal:</span>
+            <span id="printSubtotal" style="font-weight: 500;">Rs. 0.00</span>
+          </div>
+          <div style="display: flex; justify-content: space-between; margin: 4px 0;">
+            <span>Discount:</span>
+            <span id="printDiscount" style="color: #10b981;">-Rs. 0.00</span>
+          </div>
+          <div style="border-top: 2px solid #333; padding-top: 8px; margin-top: 8px; display: flex; justify-content: space-between;">
+            <span><strong>TOTAL DUE:</strong></span>
+            <span style="font-weight: bold; font-size: 16px;" id="printGrandTotal">Rs. 0.00</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top: 12px; padding: 8px; background: #f0fdf4; border-radius: 6px; font-size: 11px;">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+          <div>
+            <p style="margin: 0;"><strong>Amount Paid:</strong> <span id="printAmountPaid" style="font-weight: 600;">Rs. 0.00</span></p>
+          </div>
+          <div>
+            <p style="margin: 0;"><strong>Balance/Change:</strong> <span id="printBalance" style="font-weight: 600; color: #10b981;">Rs. 0.00</span></p>
+          </div>
+        </div>
+      </div>
+
+      <div class="receipt-divider"></div>
+
+      <div class="receipt-footer">
+        <p style="text-align: center; font-size: 12px; font-weight: 600; margin: 0;">✓ Thank you for choosing WE CARE Healthcare</p>
+        <p style="text-align: center; font-size: 10px; color: #6b7280; margin: 6px 0;">Your health is our priority</p>
+        <p style="text-align: center; font-size: 10px; color: #999; margin: 8px 0;">Please retain this receipt for warranty & services</p>
+        <p style="text-align: center; font-size: 9px; color: #d1d5db; margin: 6px 0;">Generated by WE CARE POS System | Valid Receipt</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Lab Report Print -->
+  <div id="labPrintWrap" class="print-wrap">
+    <div class="lab-report-card">
+      <div class="lab-print-header">
+        <h2>WE CARE LAB REPORT</h2>
+      </div>
+      <div class="lab-print-meta">
+        <p><strong>Report ID:</strong> <span id="printLabReportId"></span></p>
+        <p><strong>Request ID:</strong> <span id="printLabRequestId"></span></p>
+
+        <p><strong>Patient:</strong> <span id="printLabPatient"></span></p>
+        <p><strong>Test:</strong> <span id="printLabTest"></span></p>
+        <p><strong>Technician:</strong> <span id="printLabTechnician"></span></p>
+      </div>
+      <table class="print-table">
+        <thead>
+          <tr>
+            <th>Result Summary</th>
+            <th>Normal Range / Unit</th>
+          </tr>
+        </thead>
+        <tbody id="printLabResultBody"></tbody>
+      </table>
+      <div class="receipt-footer">
+        <p><strong>Remarks:</strong> <span id="printLabRemarks"></span></p>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/pharmacist.js"></script>
+</body>
+</html>

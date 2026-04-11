@@ -1,0 +1,233 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WE CARE | Doctor Dashboard</title>
+  <link rel="stylesheet" href="css/doctor.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand-card">
+        <div class="brand-logo-wrap">
+          <img src="images/logo.png" alt="WE CARE Logo" class="brand-logo" />
+        </div>
+        <h1 class="brand-title">Doctor Dashboard</h1>
+        <p class="brand-subtitle">Appointments, consultation, patient history, and profile</p>
+      </div>
+
+      <nav class="sidebar-nav">
+        <button class="nav-btn active" data-target="section-appointments" type="button">
+          <span class="nav-icon">📅</span>
+          <span>My Appointments</span>
+        </button>
+
+        <button class="nav-btn" data-target="section-consultation" type="button">
+          <span class="nav-icon">📝</span>
+          <span>Consultation Notes</span>
+        </button>
+
+        <button class="nav-btn" data-target="section-history" type="button">
+          <span class="nav-icon">📚</span>
+          <span>Patient History</span>
+        </button>
+
+        <button class="nav-btn" data-target="section-profile" type="button">
+          <span class="nav-icon">👤</span>
+          <span>Profile</span>
+        </button>
+      </nav>
+
+      <button class="logout-btn" id="logoutBtn" type="button">Logout</button>
+    </aside>
+
+    <main class="main-area">
+      <header class="topbar">
+        <div class="topbar-left">
+          <nav class="top-links">
+            <a href="#">Home</a>
+            <a href="#">Service</a>
+            <a href="#">About Us</a>
+            <a href="#">Contact Us</a>
+          </nav>
+        </div>
+        <div class="topbar-user">
+          <span class="user-role">Doctor</span>
+          <div class="user-avatar">D</div>
+        </div>
+      </header>
+
+      <section class="hero-banner">
+        <div class="hero-overlay">
+          <h2>Doctor Workspace</h2>
+          <p>Manage appointments, record consultations, and review patient history.</p>
+        </div>
+      </section>
+
+      <div class="content-wrap">
+        <!-- My Appointments -->
+        <section id="section-appointments" class="content-section active-section">
+          <div class="panel">
+            <div class="panel-header panel-header-space">
+              <div>
+                <h3>My Appointments</h3>
+                <p>Today's and upcoming appointments</p>
+              </div>
+              <div class="search-box">
+                <input id="appointmentSearchInput" type="text" placeholder="Search by patient name" />
+              </div>
+            </div>
+
+            <div class="summary-cards">
+              <div class="summary-card">
+                <span class="summary-label">Today's Appointments</span>
+                <strong id="todayAppointmentsCount">0</strong>
+              </div>
+              <div class="summary-card">
+                <span class="summary-label">Completed</span>
+                <strong id="completedAppointmentsCount">0</strong>
+              </div>
+              <div class="summary-card">
+                <span class="summary-label">Pending</span>
+                <strong id="pendingAppointmentsCount">0</strong>
+              </div>
+            </div>
+
+            <div class="table-wrap">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Patient</th>
+                    <th>Date</th>
+                    <th>Time</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="doctorAppointmentTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+
+<!-- Consultation Notes -->
+        <section id="section-consultation" class="content-section">
+          <div class="panel">
+            <div class="panel-header">
+              <div>
+                <h3>Consultation Notes</h3>
+                <p>Record diagnosis, notes, and prescribed items/services</p>
+              </div>
+            </div>
+
+            <form id="consultationForm" class="form-grid" novalidate>
+              <div class="form-group">
+                <label for="consultPatientName">Patient Name</label>
+                <input id="consultPatientName" type="text" placeholder="Enter patient name" />
+              </div>
+
+              <div class="form-group">
+                <label for="consultAppointmentDate">Appointment Date</label>
+                <input id="consultAppointmentDate" type="date" />
+              </div>
+
+              <div class="form-group form-group-full">
+                <label for="diagnosis">Diagnosis</label>
+                <input id="diagnosis" type="text" placeholder="Enter diagnosis" />
+              </div>
+
+              <div class="form-group form-group-full">
+                <label for="consultNotes">Consultation Notes</label>
+                <textarea id="consultNotes" placeholder="Enter consultation notes"></textarea>
+              </div>
+
+              <div class="form-group form-group-full">
+                <label for="prescribedItems">Prescribed Medicines / Services</label>
+                <input id="prescribedItems" type="text" placeholder="e.g. Paracetamol, Blood Test" />
+              </div>
+            </form>
+
+            <div class="panel-footer">
+              <div class="action-group">
+                <button class="btn btn-primary" id="saveConsultationBtn" type="button">Save Consultation</button>
+                <button class="btn btn-secondary" id="clearConsultationBtn" type="button">Clear</button>
+              </div>
+              <p class="status-message" id="consultationMessageBox">Ready to save consultation.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Patient History -->
+        <section id="section-history" class="content-section">
+          <div class="panel">
+            <div class="panel-header panel-header-space">
+              <div>
+                <h3>Patient History</h3>
+                <p>View previously saved consultations</p>
+              </div>
+              <div class="search-box">
+                <input id="historySearchInput" type="text" placeholder="Search by patient name" />
+              </div>
+            </div>
+
+            <div class="table-wrap">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Patient</th>
+                    <th>Date</th>
+                    <th>Diagnosis</th>
+                    <th>Notes</th>
+                    <th>Prescribed Items</th>
+                  </tr>
+                </thead>
+                <tbody id="historyTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        <!-- Profile -->
+        <section id="section-profile" class="content-section">
+          <div class="panel profile-panel">
+            <div class="profile-left">
+              <div class="profile-avatar">D</div>
+              <div class="profile-info">
+                <h3>Dr. Doctor Name</h3>
+                <p>Cardiologist</p>
+                <p>Active</p>
+                <p>License No: LIC-10234</p>
+              </div>
+            </div>
+
+            <div class="profile-right">
+              <div class="profile-card">
+                <h4>Weekly Schedule</h4>
+                <div class="schedule-grid">
+                  <div>Mon - 9:00 AM to 1:00 PM</div>
+                  <div>Tue - 10:00 AM to 2:00 PM</div>
+                  <div>Wed - 9:00 AM to 1:00 PM</div>
+                  <div>Thu - 2:00 PM to 6:00 PM</div>
+                  <div>Fri - 9:00 AM to 12:00 PM</div>
+                  <div>Sat - 10:00 AM to 1:00 PM</div>
+                </div>
+              </div>
+
+
+<div class="profile-actions">
+                <button class="btn btn-secondary">Change Password</button>
+                <button class="btn btn-primary">Update Profile</button>
+                <button class="btn btn-secondary" id="totalConsultationsBtn" type="button">Total Consultations: 0</button>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <script src="js/doctor.js"></script>
+</body>
+</html>
