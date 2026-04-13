@@ -463,51 +463,96 @@
 
   <!-- Employee ID Badge Print Wrapper -->
   <div id="printBadgeWrap" class="print-badge-wrap">
-    <div class="employee-badge-sheet">
-      <!-- Employee ID Badge -->
-      <div class="employee-id-badge">
-        <div class="badge-top-section">
-          <div class="badge-logo-area">
-            <img src="images/logo.png" alt="WE CARE Logo" class="badge-logo" />
+    <div class="badge-print-page">
+      <div class="id-card-front">
+
+        <!-- Header band -->
+        <div class="idc-header" id="badgeAccentBar">
+          <div class="idc-header-left">
+            <div class="idc-logo-box">
+              <img src="images/logo.png" alt="WE CARE" class="idc-logo-img" />
+            </div>
+            <div class="idc-org-info">
+              <div class="idc-org-name">WE CARE</div>
+              <div class="idc-org-sub">Health Management System</div>
+            </div>
           </div>
-          <div class="badge-company-name">WE CARE</div>
-        </div>
-
-        <div class="badge-middle-section">
-          <div class="badge-info-block">
-            <div class="badge-field">
-              <span class="badge-label">Employee ID</span>
-              <strong id="badgeEmployeeId">ADM-001</strong>
-            </div>
-
-            <div class="badge-field">
-              <span class="badge-label">Name</span>
-              <strong id="badgeEmployeeName">Employee Name</strong>
-            </div>
-
-            <div class="badge-field">
-              <span class="badge-label">Role</span>
-              <strong id="badgeEmployeeRole">ADMIN</strong>
-            </div>
-
-            <div class="badge-field">
-              <span class="badge-label">Department</span>
-              <strong id="badgeEmployeeDept">Management</strong>
-            </div>
-
-            <div class="badge-field">
-              <span class="badge-label">Contact</span>
-              <strong id="badgeEmployeePhone">0771234567</strong>
-            </div>
+          <div class="idc-header-right">
+            <span class="idc-role-pill" id="badgeRolePill">ADMIN</span>
           </div>
         </div>
 
-        <div class="badge-bottom-section">
-          <div class="badge-footer-text">
-            <p>This badge is valid as long as the employee is active</p>
-            <p class="badge-footer-date">Issued: <span id="badgeIssuedDate">2026-04-01</span></p>
+        <!-- Body -->
+        <div class="idc-body">
+
+          <!-- Avatar column -->
+          <div class="idc-avatar-col">
+            <div class="idc-avatar-circle" id="badgeAvatarCircle">
+              <span class="idc-avatar-initials" id="badgeAvatarInitials">AU</span>
+            </div>
+            <div class="idc-staff-id-box">
+              <div class="idc-sid-label">STAFF ID</div>
+              <div class="idc-sid-value" id="badgeEmployeeId">ADM-001</div>
+            </div>
+          </div>
+
+          <!-- Info column -->
+          <div class="idc-info-col">
+            <div class="idc-name" id="badgeEmployeeName">Admin User</div>
+            <div class="idc-role-text" id="badgeEmployeeRole">Administrator</div>
+
+            <div class="idc-divider"></div>
+
+            <div class="idc-fields">
+              <div class="idc-field-row">
+                <span class="idc-field-icon">🏥</span>
+                <div>
+                  <div class="idc-field-label">Department</div>
+                  <div class="idc-field-value" id="badgeEmployeeDept">Administration</div>
+                </div>
+              </div>
+              <div class="idc-field-row">
+                <span class="idc-field-icon">📞</span>
+                <div>
+                  <div class="idc-field-label">Contact</div>
+                  <div class="idc-field-value" id="badgeEmployeePhone">0771234567</div>
+                </div>
+              </div>
+              <div class="idc-field-row">
+                <span class="idc-field-icon">✉️</span>
+                <div>
+                  <div class="idc-field-label">Email</div>
+                  <div class="idc-field-value idc-email" id="badgeEmployeeEmail">admin@wecare.com</div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
+
+        <!-- Footer -->
+        <div class="idc-footer">
+          <div class="idc-footer-left">
+            <div class="idc-date-row">
+              <span class="idc-date-label">Issued:</span>
+              <span class="idc-date-val" id="badgeIssuedDate">—</span>
+            </div>
+            <div class="idc-date-row">
+              <span class="idc-date-label">Valid Until:</span>
+              <span class="idc-date-val" id="badgeExpiryDate">—</span>
+            </div>
+          </div>
+          <div class="idc-footer-right">
+            <div class="idc-sig-line"></div>
+            <div class="idc-sig-label">Authorised Signature</div>
+          </div>
+        </div>
+
+        <!-- Bottom bar -->
+        <div class="idc-bottom-bar">
+          <span>WE CARE Health Management System · Sri Lanka</span>
+          <span>If found, please return to HR Department</span>
+        </div>
+
       </div>
     </div>
   </div>

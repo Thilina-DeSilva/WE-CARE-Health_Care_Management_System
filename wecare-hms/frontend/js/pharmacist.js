@@ -90,7 +90,6 @@ function savePOSQueue(data) {
 function setStatusMessage(el, text, type = "default") {
   if (!el) return;
   el.textContent = text;
-
   if (type === "success") el.style.color = "#16a34a";
   else if (type === "error") el.style.color = "#dc2626";
   else if (type === "warning") el.style.color = "#d97706";
@@ -116,20 +115,45 @@ function formatDateTime() {
   return new Date().toLocaleString();
 }
 
-function generateInvoiceId(list) {
-  return `INV-${String(list.length + 1).padStart(3, "0")}`;
+// FIX #3: ID generation uses max existing ID to prevent collisions after deletions
+function generateInvoiceId() {
+  const invoices = getInvoices();
+  if (invoices.length === 0) return "INV-001";
+  const maxNum = Math.max(...invoices.map(i => {
+    const n = parseInt((i.invoiceId || "0").replace(/\D/g, ""), 10);
+    return isNaN(n) ? 0 : n;
+  }));
+  return `INV-${String(maxNum + 1).padStart(3, "0")}`;
 }
 
-function generatePaymentId(list) {
-  return `PAY-${String(list.length + 1).padStart(3, "0")}`;
+function generatePaymentId() {
+  const payments = getPayments();
+  if (payments.length === 0) return "PAY-001";
+  const maxNum = Math.max(...payments.map(p => {
+    const n = parseInt((p.paymentId || "0").replace(/\D/g, ""), 10);
+    return isNaN(n) ? 0 : n;
+  }));
+  return `PAY-${String(maxNum + 1).padStart(3, "0")}`;
 }
 
-function generateLabRequestId(list) {
-  return `LRQ-${String(list.length + 1).padStart(3, "0")}`;
+function generateLabRequestId() {
+  const requests = getLabRequests();
+  if (requests.length === 0) return "LRQ-001";
+  const maxNum = Math.max(...requests.map(r => {
+    const n = parseInt((r.requestId || "0").replace(/\D/g, ""), 10);
+    return isNaN(n) ? 0 : n;
+  }));
+  return `LRQ-${String(maxNum + 1).padStart(3, "0")}`;
 }
 
-function generateLabReportId(list) {
-  return `LRP-${String(list.length + 1).padStart(3, "0")}`;
+function generateLabReportId() {
+  const reports = getLabReports();
+  if (reports.length === 0) return "LRP-001";
+  const maxNum = Math.max(...reports.map(r => {
+    const n = parseInt((r.reportId || "0").replace(/\D/g, ""), 10);
+    return isNaN(n) ? 0 : n;
+  }));
+  return `LRP-${String(maxNum + 1).padStart(3, "0")}`;
 }
 
 function getPatientById(patientId) {
@@ -252,6 +276,10 @@ function populatePatientsEverywhere() {
   const patientSearchList = document.getElementById("patientSearchList");
   const labPatientSelect = document.getElementById("labPatientSelect");
 
+  // Preserve current selections before re-render
+  const currentPosVal = patientSelect?.value || "";
+  const currentLabVal = labPatientSelect?.value || "";
+
   if (patientSelect) patientSelect.innerHTML = '<option value="">Select patient</option>';
   if (labPatientSelect) labPatientSelect.innerHTML = '<option value="">Select patient</option>';
   if (patientSearchList) patientSearchList.innerHTML = "";
@@ -267,12 +295,19 @@ function populatePatientsEverywhere() {
       patientSearchList.innerHTML += `<option value="${patient.patientId} - ${patient.fullName} - ${patient.nic}"></option>`;
     }
   });
+
+  // Restore selections after re-render FIX #15
+  if (patientSelect && currentPosVal) patientSelect.value = currentPosVal;
+  if (labPatientSelect && currentLabVal) labPatientSelect.value = currentLabVal;
 }
 
 function populateDoctorsEverywhere() {
   const doctors = getDoctors();
   const posDoctorSelect = document.getElementById("posDoctorSelect");
   const labDoctorSelect = document.getElementById("labDoctorSelect");
+
+  const currentPosDoc = posDoctorSelect?.value || "";
+  const currentLabDoc = labDoctorSelect?.value || "";
 
   if (posDoctorSelect) posDoctorSelect.innerHTML = '<option value="">Select doctor</option>';
   if (labDoctorSelect) labDoctorSelect.innerHTML = '<option value="">Select doctor</option>';
@@ -286,6 +321,9 @@ function populateDoctorsEverywhere() {
       labDoctorSelect.innerHTML += `<option value="${doctor.doctorId}">${label}</option>`;
     }
   });
+
+  if (posDoctorSelect && currentPosDoc) posDoctorSelect.value = currentPosDoc;
+  if (labDoctorSelect && currentLabDoc) labDoctorSelect.value = currentLabDoc;
 }
 
 function populateItemsForPOS() {
@@ -340,15 +378,20 @@ function renderPatientQuickCard() {
   if (!card) return;
 
   if (!patient) {
-    card.innerHTML = '<p>Select a patient to see quick details.</p>';
+    card.className = "patient-quick-card";
+    card.innerHTML = "<p>Select a patient to see quick details.</p>";
     return;
   }
+
+  card.className = "patient-quick-card filled";
   card.innerHTML =
-    `<p><strong>Patient ID:</strong> ${patient.patientId}</p>` +
-    `<p><strong>Name:</strong> ${patient.fullName}</p>` +
-    `<p><strong>NIC:</strong> ${patient.nic}</p>` +
-    `<p><strong>Phone:</strong> ${patient.phone}</p>` +
-    `<p><strong>Blood Group:</strong> ${patient.bloodGroup || "-"}</p>`;
+    `<div class="pqc-name">${patient.fullName}</div>` +
+    `<div class="pqc-row">` +
+    `<div class="pqc-item">ID: <span>${patient.patientId}</span></div>` +
+    `<div class="pqc-item">NIC: <span>${patient.nic}</span></div>` +
+    `<div class="pqc-item">Phone: <span>${patient.phone}</span></div>` +
+    `<div class="pqc-item">Blood: <span>${patient.bloodGroup || "-"}</span></div>` +
+    `</div>`;
 }
 
 function updateConsultationFee() {
@@ -414,6 +457,12 @@ function addItemToCart() {
     hasError = true;
   }
 
+  // FIX #14: Validate discount doesn't exceed item subtotal
+  if (item && !hasError && discount > Number(item.price) * qty) {
+    setText("itemDiscountError", `Discount cannot exceed item total of Rs. ${(Number(item.price) * qty).toFixed(2)}.`);
+    hasError = true;
+  }
+
   if (hasError) {
     setStatusMessage(document.getElementById("cartMessageBox"), "Please fix cart item errors.", "error");
     return;
@@ -426,15 +475,16 @@ function addItemToCart() {
 
     if (item.type === "MEDICINE" && newQty > Number(item.stock)) {
       setText("itemQtyError", `Cannot exceed stock of ${item.stock}.`);
-      setStatusMessage(document.getElementById("cartMessageBox"), "Duplicate item merged blocked by stock limit.", "warning");
+      setStatusMessage(document.getElementById("cartMessageBox"), "Stock limit reached.", "warning");
       return;
     }
 
-existing.qty = newQty;
-    existing.discount += discount;
+    existing.qty = newQty;
+    // FIX #2: Replace discount instead of accumulating it
+    existing.discount = discount;
     if (note) existing.note = note;
     existing.lineTotal = calculateLineTotal(existing.price, existing.qty, existing.discount);
-    setStatusMessage(document.getElementById("cartMessageBox"), "Duplicate item merged into existing cart row.", "success");
+    setStatusMessage(document.getElementById("cartMessageBox"), "Item quantity updated in cart.", "success");
   } else {
     cart.push({
       itemId: item.itemId,
@@ -496,12 +546,13 @@ function addOrUpdateConsultationFeeCartItem(feeValue = null, forceNote = "") {
   return true;
 }
 
+// FIX #6: Replaced alert() with inline status message
 function addConsultationFeeToCart() {
   const visitType = document.getElementById("posVisitType")?.value;
   const doctorId = document.getElementById("posDoctorSelect")?.value;
 
   if (!visitType || !doctorId) {
-    alert("Please select visit type and doctor first.");
+    setStatusMessage(document.getElementById("cartMessageBox"), "Please select visit type and doctor first.", "warning");
     return;
   }
 
@@ -509,7 +560,7 @@ function addConsultationFeeToCart() {
   if (ok) {
     setStatusMessage(
       document.getElementById("cartMessageBox"),
-      `✅ Consultation fee of ${money(numberFromMoney(document.getElementById("consultationFee")?.value))} added to cart.`,
+      `Consultation fee of ${money(numberFromMoney(document.getElementById("consultationFee")?.value))} added to cart.`,
       "success"
     );
   }
@@ -522,12 +573,12 @@ function renderCart() {
   cartTableBody.innerHTML = "";
 
   if (cart.length === 0) {
-    cartTableBody.innerHTML = '<tr><td colspan="7">No items in cart.</td></tr>';
+    cartTableBody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#94a3b8;">No items in cart.</td></tr>';
   } else {
     cart.forEach((line) => {
       cartTableBody.innerHTML += `
         <tr>
-          <td>${line.name}</td>
+          <td>${line.name}${line.note ? `<br><small style="color:#94a3b8;">${line.note}</small>` : ""}</td>
           <td>${line.type}</td>
           <td>${line.qty}</td>
           <td>${money(line.price)}</td>
@@ -548,10 +599,12 @@ function renderCart() {
   recalcSummary();
 }
 
+// FIX #4: Recalc uses lineTotal to avoid negative grand total from mismatched discount math
 function recalcSummary() {
   const subtotal = cart.reduce((sum, line) => sum + (Number(line.price) * Number(line.qty)), 0);
   const totalDiscount = cart.reduce((sum, line) => sum + Number(line.discount || 0), 0);
-  const grandTotal = subtotal - totalDiscount;
+  // Grand total derived from sum of lineTotals (already discount-adjusted per line)
+  const grandTotal = cart.reduce((sum, line) => sum + Number(line.lineTotal || 0), 0);
 
   setText("subtotalText", money(subtotal));
   setText("discountText", money(totalDiscount));
@@ -584,7 +637,7 @@ window.increaseCartQty = function (itemId) {
   const line = cart.find((c) => c.itemId === itemId);
   if (!line) return;
 
-if (line.itemId === "CONSULTATION_FEE") return;
+  if (line.itemId === "CONSULTATION_FEE") return;
 
   if (item && item.type === "MEDICINE" && line.qty + 1 > Number(item.stock)) {
     setStatusMessage(document.getElementById("cartMessageBox"), "Cannot exceed available stock.", "warning");
@@ -681,8 +734,8 @@ function buildInvoiceObject(statusOverride = null, paymentMethodOverride = "", a
   const paymentMethod = paymentMethodOverride || document.getElementById("paymentMethod")?.value || "";
   const amountPaid = Number(amountPaidOverride || document.getElementById("amountPaid")?.value || 0);
 
-  const invoices = getInvoices();
-  const invoiceId = generateInvoiceId(invoices);
+  // FIX #3: Always read fresh from localStorage to get accurate ID
+  const invoiceId = generateInvoiceId();
 
   const subtotal = numberFromMoney(document.getElementById("subtotalText")?.textContent);
   const discount = numberFromMoney(document.getElementById("discountText")?.textContent);
@@ -717,7 +770,7 @@ function deductMedicineStock(invoice) {
     if (line.type === "MEDICINE") {
       const item = inventory.find((i) => i.itemId === line.itemId);
       if (item) {
-        item.stock = Number(item.stock) - Number(line.qty);
+        item.stock = Math.max(0, Number(item.stock) - Number(line.qty));
       }
     }
   });
@@ -725,6 +778,7 @@ function deductMedicineStock(invoice) {
   saveInventory(inventory);
 }
 
+// FIX #9: saveInvoiceOnly no longer deducts stock — only payNow does
 function saveInvoiceOnly() {
   if (!validateBillingCore(false)) return;
 
@@ -734,7 +788,7 @@ function saveInvoiceOnly() {
   saveInvoices(invoices);
 
   currentInvoiceForPrint = invoice;
-  setStatusMessage(document.getElementById("billingMessageBox"), `Invoice ${invoice.invoiceId} saved successfully.`, "success");
+  setStatusMessage(document.getElementById("billingMessageBox"), `Invoice ${invoice.invoiceId} saved as PENDING.`, "success");
   renderInvoices();
 }
 
@@ -749,8 +803,8 @@ function payNow() {
   invoices.push(invoice);
   saveInvoices(invoices);
 
+  const paymentId = generatePaymentId();
   const payments = getPayments();
-  const paymentId = generatePaymentId(payments);
   payments.push({
     paymentId,
     invoiceId: invoice.invoiceId,
@@ -761,14 +815,20 @@ function payNow() {
   });
   savePayments(payments);
 
+  // FIX #9: Stock only deducted on actual payment
   deductMedicineStock(invoice);
   currentInvoiceForPrint = invoice;
   renderInvoices();
   populateItemsForPOS();
-  setStatusMessage(document.getElementById("billingMessageBox"), `Payment successful for ${invoice.invoiceId}.`, "success");
+  setStatusMessage(document.getElementById("billingMessageBox"), `Payment successful. Invoice: ${invoice.invoiceId}`, "success");
 }
 
+// FIX #11: Confirm before clearing cart
 function clearCartAll() {
+  if (cart.length > 0) {
+    const ok = confirm("Are you sure you want to clear the entire cart?");
+    if (!ok) return;
+  }
   cart = [];
   renderCart();
   setValue("paymentMethod", "");
@@ -777,33 +837,50 @@ function clearCartAll() {
   setStatusMessage(document.getElementById("billingMessageBox"), "Cart cleared.", "default");
 }
 
+// FIX #8: Balance shows proper change/due label on receipt
 function fillReceiptPrint(invoice) {
   setText("printInvoiceId", invoice.invoiceId);
   setText("printPatientName", invoice.patientName);
   setText("printInvoiceDate", invoice.date);
   setText("printGrandTotal", money(invoice.grandTotal));
   setText("printPaymentMethod", invoice.paymentMethod || "Pending");
+  setText("printDoctorName", invoice.doctorName || "-");
+  setText("printVisitType", invoice.visitType || "-");
+  setText("printInvoiceStatus", invoice.status || "PENDING");
 
   setText("printSubtotal", money(invoice.subtotal));
   setText("printDiscount", `-${money(invoice.discount)}`);
   setText("printAmountPaid", money(invoice.amountPaid || 0));
-  setText("printBalance", money(Math.abs(invoice.balance || 0)));
+
+  // FIX #8: Show meaningful balance label
+  const balance = Number(invoice.balance || 0);
+  if (balance >= 0) {
+    setText("printBalance", `Change: ${money(balance)}`);
+  } else {
+    setText("printBalance", `Due: ${money(Math.abs(balance))}`);
+  }
 
   const itemsBody = document.getElementById("printReceiptItems");
   if (itemsBody) {
     itemsBody.innerHTML = "";
-    invoice.items.forEach((line) => {
+    (invoice.items || []).forEach((line) => {
+      // FIX #1: Ensure all numeric values are coerced — prevents Rs. 0.00 for lab tests
+      const price = Number(line.price) || 0;
+      const qty = Number(line.qty) || 1;
+      const lineTotal = Number(line.lineTotal) || (price * qty);
       itemsBody.innerHTML += `
         <tr>
           <td>${line.name}${line.note ? `<br><small>${line.note}</small>` : ""}</td>
-          <td>${line.qty}</td>
-          <td>${money(line.lineTotal)}</td>
+          <td style="text-align: center;">${qty}</td>
+          <td style="text-align: right;">${money(price)}</td>
+          <td style="text-align: right;">${money(lineTotal)}</td>
         </tr>
       `;
     });
   }
 }
 
+// FIX #5: Added setTimeout so browser can repaint before print dialog
 function printCurrentReceipt() {
   if (!currentInvoiceForPrint) {
     setStatusMessage(document.getElementById("billingMessageBox"), "Save or pay an invoice first before printing.", "warning");
@@ -813,8 +890,10 @@ function printCurrentReceipt() {
   fillReceiptPrint(currentInvoiceForPrint);
   const wrap = document.getElementById("receiptPrintWrap");
   if (wrap) wrap.style.display = "block";
-  window.print();
-  if (wrap) wrap.style.display = "none";
+  setTimeout(() => {
+    window.print();
+    setTimeout(() => { if (wrap) wrap.style.display = "none"; }, 500);
+  }, 100);
 }
 
 window.printInvoiceById = function (invoiceId) {
@@ -824,8 +903,11 @@ window.printInvoiceById = function (invoiceId) {
   fillReceiptPrint(invoice);
   const wrap = document.getElementById("receiptPrintWrap");
   if (wrap) wrap.style.display = "block";
-  window.print();
-  if (wrap) wrap.style.display = "none";
+  // FIX #5: setTimeout for print
+  setTimeout(() => {
+    window.print();
+    setTimeout(() => { if (wrap) wrap.style.display = "none"; }, 500);
+  }, 100);
 };
 
 function renderInvoices() {
@@ -841,7 +923,7 @@ function renderInvoices() {
   );
 
   if (filtered.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="8">No invoices found.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#94a3b8;">No invoices found.</td></tr>';
     return;
   }
 
@@ -877,30 +959,23 @@ function renderReceptionistQueue() {
   if (!container) return;
 
   if (queue.length === 0) {
-    container.innerHTML = '<p style="color:#6b7280;text-align:center;">No pending appointments from reception.</p>';
+    container.innerHTML = '<p style="color:#6b7280;text-align:center;padding:20px;">No pending appointments from reception.</p>';
     return;
   }
 
   container.innerHTML = queue.map((item) =>
-    `<div style="display:grid;grid-template-columns:1fr 1fr 220px;gap:12px;padding:16px;margin-bottom:12px;border:1px solid #e5e7eb;border-radius:12px;background:#f9fafb;align-items:center;">
-      <div>
-        <p><strong style="font-size:16px;">${item.patientName}</strong></p>
-        <p style="font-size:12px;color:#6b7280;">ID: ${item.patientId} | NIC: ${item.patientNic || "-"}</p>
-        <p style="font-size:12px;color:#6b7280;">📞 ${item.patientPhone || "-"}</p>
+    `<div class="queue-card">
+      <div class="queue-card-info">
+        <div class="queue-card-name">${item.patientName}</div>
+        <div class="queue-card-meta">ID: ${item.patientId} | NIC: ${item.patientNic || "-"} | Tel: ${item.patientPhone || "-"}</div>
+        <div class="queue-card-meta">Doctor: ${item.doctorName} | Type: ${item.casePriority || "-"} | Need: ${item.medicalNeed || "-"}</div>
       </div>
-      <div>
-        <p style="font-size:14px;"><strong>Doctor:</strong> ${item.doctorName}</p>
-        <p style="font-size:14px;"><strong>Type:</strong> ${item.casePriority || "-"}</p>
-        <p style="font-size:14px;"><strong>Need:</strong> ${item.medicalNeed || "-"}</p>
-      </div>
-      <div style="display:flex;flex-direction:column;gap:8px;">
-        <div style="background:#ede9fe;padding:12px;border-radius:8px;text-align:center;">
-          <p style="font-size:12px;color:#6b7280;margin:0;">Consultation Fee</p>
-          <p style="font-size:20px;font-weight:bold;color:#7b6ee6;margin:0;">${money(item.consultationFee)}</p>
+      <div style="text-align:right;">
+        <div style="background:var(--primary-light);padding:8px 12px;border-radius:var(--radius);margin-bottom:8px;">
+          <div style="font-size:11px;color:var(--text-3);">Consultation Fee</div>
+          <div style="font-size:18px;font-weight:700;color:var(--primary);">${money(item.consultationFee)}</div>
         </div>
-        <button onclick="loadAppointmentToInvoice('${item.queueId}')" style="padding:10px 16px;background:#7b6ee6;color:white;border:none;border-radius:8px;cursor:pointer;font-weight:600;">
-          ↪️ Load to Invoice
-        </button>
+        <button onclick="loadAppointmentToInvoice('${item.queueId}')" class="btn btn-primary btn-sm">Load to Invoice</button>
       </div>
     </div>`
   ).join("");
@@ -931,12 +1006,13 @@ window.loadAppointmentToInvoice = function (queueId) {
       "success"
     );
   }
+
+  showSection("section-pos");
 };
 
 /* ---------- Lab Requests ---------- */
 function setupLabRequests() {
-
-document.getElementById("saveLabRequestBtn")?.addEventListener("click", saveLabRequest);
+  document.getElementById("saveLabRequestBtn")?.addEventListener("click", saveLabRequest);
   document.getElementById("clearLabRequestBtn")?.addEventListener("click", clearLabRequestForm);
   document.getElementById("labRequestSearchInput")?.addEventListener("input", renderLabRequests);
 }
@@ -994,7 +1070,7 @@ function saveLabRequest() {
     saveLabRequests(requests);
     setStatusMessage(document.getElementById("labRequestMessageBox"), "Lab request updated.", "success");
   } else {
-    const requestId = generateLabRequestId(requests);
+    const requestId = generateLabRequestId();
     requests.push({
       requestId,
       patientId,
@@ -1043,7 +1119,7 @@ window.deleteLabRequest = function (requestId) {
   const ok = confirm("Delete this lab request?");
   if (!ok) return;
 
-let requests = getLabRequests();
+  let requests = getLabRequests();
   requests = requests.filter((r) => r.requestId !== requestId);
   saveLabRequests(requests);
   renderLabRequests();
@@ -1051,6 +1127,8 @@ let requests = getLabRequests();
   setStatusMessage(document.getElementById("labRequestMessageBox"), "Lab request deleted.", "success");
 };
 
+// FIX #7: Cancelled lab requests cannot be sent to POS
+// FIX #1: Number(req.price) ensures lab test price renders correctly on receipt
 window.sendLabRequestToPOS = function (requestId) {
   const requests = getLabRequests();
   const req = requests.find((r) => r.requestId === requestId);
@@ -1061,10 +1139,18 @@ window.sendLabRequestToPOS = function (requestId) {
     return;
   }
 
+  // FIX #7: Block cancelled lab requests
+  if (req.status === "CANCELLED") {
+    setStatusMessage(document.getElementById("labRequestMessageBox"), "Cannot send a cancelled lab request to POS.", "error");
+    return;
+  }
+
   setValue("posPatientSelect", req.patientId);
   renderPatientQuickCard();
 
+  const price = Number(req.price); // FIX #1: Force to Number
   const existing = cart.find((line) => line.itemId === req.testId);
+
   if (existing) {
     existing.qty += 1;
     existing.lineTotal = calculateLineTotal(existing.price, existing.qty, existing.discount);
@@ -1073,11 +1159,11 @@ window.sendLabRequestToPOS = function (requestId) {
       itemId: req.testId,
       name: req.testName,
       type: "LAB_TEST",
-      price: Number(req.price),
+      price: price,
       qty: 1,
       discount: 0,
       note: `Linked from lab request ${req.requestId}`,
-      lineTotal: calculateLineTotal(req.price, 1, 0)
+      lineTotal: calculateLineTotal(price, 1, 0) // FIX #1: use Number price
     });
   }
 
@@ -1103,7 +1189,7 @@ function renderLabRequests() {
   );
 
   if (filtered.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="8">No lab requests found.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#94a3b8;">No lab requests found.</td></tr>';
     return;
   }
 
@@ -1112,6 +1198,11 @@ function renderLabRequests() {
       req.status === "COMPLETED" ? "badge-completed" :
       req.status === "CANCELLED" ? "badge-cancelled" :
       req.status === "IN_PROGRESS" ? "badge-progress" : "badge-pending";
+
+    const sentLabel = req.sentToPOS
+      ? '<span class="badge badge-completed" style="font-size:10px;">Sent</span>'
+      : "";
+
     tbody.innerHTML += `
       <tr>
         <td>${req.requestId}</td>
@@ -1124,7 +1215,7 @@ function renderLabRequests() {
         <td>
           <div class="row-actions">
             <button class="action-btn edit" onclick="editLabRequest('${req.requestId}')">Edit</button>
-            <button class="action-btn print" onclick="sendLabRequestToPOS('${req.requestId}')">Send to POS</button>
+            ${req.status !== "CANCELLED" && !req.sentToPOS ? `<button class="action-btn send" onclick="sendLabRequestToPOS('${req.requestId}')">Send to POS</button>` : sentLabel}
             <button class="action-btn delete" onclick="deleteLabRequest('${req.requestId}')">Delete</button>
           </div>
         </td>
@@ -1164,8 +1255,8 @@ function saveLabReport() {
 
   let hasError = false;
   if (!requestId) { setText("labReportRequestError", "Select request."); hasError = true; }
-  if (technician.length < 3) { setText("labTechnicianError", "Enter technician name."); hasError = true; }
-  if (resultText.length < 3) { setText("labResultTextError", "Enter result summary."); hasError = true; }
+  if (technician.length < 3) { setText("labTechnicianError", "Enter technician name (min 3 chars)."); hasError = true; }
+  if (resultText.length < 3) { setText("labResultTextError", "Enter result summary (min 3 chars)."); hasError = true; }
   if (normalRange.length < 2) { setText("labNormalRangeError", "Enter normal range or unit."); hasError = true; }
 
   if (hasError) {
@@ -1190,11 +1281,13 @@ function saveLabReport() {
     report.normalRange = normalRange;
     report.remarks = remarks;
     report.status = "COMPLETED";
+    report.updatedDate = formatDateTime();
 
     saveLabReports(reports);
+    currentLabReportForPrint = report;
     setStatusMessage(document.getElementById("labReportMessageBox"), "Lab report updated.", "success");
   } else {
-    const reportId = generateLabReportId(reports);
+    const reportId = generateLabReportId();
     const report = {
       reportId,
       requestId,
@@ -1223,6 +1316,7 @@ function saveLabReport() {
   clearLabReportForm(false);
   renderLabReports();
   renderLabRequests();
+  populateLabReportRequestSelect();
 }
 
 function clearLabReportForm(resetMessage = true) {
@@ -1272,7 +1366,7 @@ function renderLabReports() {
   );
 
   if (filtered.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="7">No lab reports found.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#94a3b8;">No lab reports found.</td></tr>';
     return;
   }
 
@@ -1316,6 +1410,7 @@ function fillLabPrint(report) {
   }
 }
 
+// FIX #5: setTimeout for lab report print too
 window.printLabReportById = function (reportId) {
   const report = getLabReports().find((r) => r.reportId === reportId);
   if (!report) return;
@@ -1323,8 +1418,10 @@ window.printLabReportById = function (reportId) {
   fillLabPrint(report);
   const wrap = document.getElementById("labPrintWrap");
   if (wrap) wrap.style.display = "block";
-  window.print();
-  if (wrap) wrap.style.display = "none";
+  setTimeout(() => {
+    window.print();
+    setTimeout(() => { if (wrap) wrap.style.display = "none"; }, 500);
+  }, 100);
 };
 
 function printCurrentLabReport() {
@@ -1335,6 +1432,8 @@ function printCurrentLabReport() {
   fillLabPrint(currentLabReportForPrint);
   const wrap = document.getElementById("labPrintWrap");
   if (wrap) wrap.style.display = "block";
-  window.print();
-  if (wrap) wrap.style.display = "none";
+  setTimeout(() => {
+    window.print();
+    setTimeout(() => { if (wrap) wrap.style.display = "none"; }, 500);
+  }, 100);
 }

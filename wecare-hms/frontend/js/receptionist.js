@@ -104,9 +104,11 @@ function setupNav() {
     });
   });
 
-  logoutBtn.addEventListener("click", () => {
-    window.location.href = "index.html";
-  });
+  if (logoutBtn) {
+    logoutBtn.addEventListener("click", () => {
+      window.location.href = "index.html";
+    });
+  }
 }
 
 function showSection(targetId) {
@@ -132,7 +134,6 @@ function showSection(targetId) {
 function setStatusMessage(element, text, type = "default") {
   if (!element) return;
   element.textContent = text;
-
   if (type === "success") element.style.color = "#16a34a";
   else if (type === "error") element.style.color = "#dc2626";
   else if (type === "warning") element.style.color = "#d97706";
@@ -154,12 +155,25 @@ function validPhone(phone) {
   return /^0\d{9}$/.test(phone);
 }
 
-function generatePatientId(list) {
-  return "PAT-" + String(list.length + 1).padStart(3, "0");
+// FIX: ID generators use max existing ID to prevent collision after deletion
+function generatePatientId() {
+  const patients = getPatients();
+  if (patients.length === 0) return "PAT-001";
+  const maxNum = Math.max(...patients.map(p => {
+    const n = parseInt((p.patientId || "0").replace(/\D/g, ""), 10);
+    return isNaN(n) ? 0 : n;
+  }));
+  return `PAT-${String(maxNum + 1).padStart(3, "0")}`;
 }
 
-function generateAppointmentId(list) {
-  return "APT-" + String(list.length + 1).padStart(3, "0");
+function generateAppointmentId() {
+  const appointments = getAppointments();
+  if (appointments.length === 0) return "APT-001";
+  const maxNum = Math.max(...appointments.map(a => {
+    const n = parseInt((a.appointmentId || "0").replace(/\D/g, ""), 10);
+    return isNaN(n) ? 0 : n;
+  }));
+  return `APT-${String(maxNum + 1).padStart(3, "0")}`;
 }
 
 function getPatients() {
@@ -183,36 +197,11 @@ function getDoctors() {
   if (fromAdmin && fromAdmin.length) return fromAdmin;
 
   return [
-    {
-      doctorId: "DOC-001",
-      name: "Dr. Silva",
-      specialization: "Cardiology",
-      schedule: "Mon-Fri 9AM-2PM"
-    },
-    {
-      doctorId: "DOC-002",
-      name: "Dr. Perera",
-      specialization: "General Medicine",
-      schedule: "Mon-Fri 9AM-5PM"
-    },
-    {
-      doctorId: "DOC-003",
-      name: "Dr. Nadeesha",
-      specialization: "Dermatology",
-      schedule: "Tue-Sat 10AM-4PM"
-    },
-    {
-      doctorId: "DOC-004",
-      name: "Dr. Kasthuri",
-      specialization: "Pediatrics",
-      schedule: "Mon-Fri 9AM-3PM"
-    },
-    {
-      doctorId: "DOC-005",
-      name: "Dr. Fernando",
-      specialization: "Emergency Medicine",
-      schedule: "Daily 8AM-6PM"
-    }
+    { doctorId: "DOC-001", name: "Dr. Silva", specialization: "Cardiology", schedule: "Mon-Fri 9AM-2PM" },
+    { doctorId: "DOC-002", name: "Dr. Perera", specialization: "General Medicine", schedule: "Mon-Fri 9AM-5PM" },
+    { doctorId: "DOC-003", name: "Dr. Nadeesha", specialization: "Dermatology", schedule: "Tue-Sat 10AM-4PM" },
+    { doctorId: "DOC-004", name: "Dr. Kasthuri", specialization: "Pediatrics", schedule: "Mon-Fri 9AM-3PM" },
+    { doctorId: "DOC-005", name: "Dr. Fernando", specialization: "Emergency Medicine", schedule: "Daily 8AM-6PM" }
   ];
 }
 
@@ -263,7 +252,6 @@ function calculateAge(dob) {
   const birth = new Date(dob);
   let age = today.getFullYear() - birth.getFullYear();
   const m = today.getMonth() - birth.getMonth();
-
   if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) {
     age--;
   }
@@ -271,35 +259,37 @@ function calculateAge(dob) {
 }
 
 function setupCameraEvents() {
-  patientPhotoInput.addEventListener("change", handlePhotoUpload);
+  if (patientPhotoInput) patientPhotoInput.addEventListener("change", handlePhotoUpload);
 
-  startCameraBtn.addEventListener("click", async () => {
-    try {
-      currentCameraStream = await navigator.mediaDevices.getUserMedia({ video: true });
+  if (startCameraBtn) {
+    startCameraBtn.addEventListener("click", async () => {
+      try {
+        currentCameraStream = await navigator.mediaDevices.getUserMedia({ video: true });
+        cameraPreview.srcObject = currentCameraStream;
+        setStatusMessage(messageBox, "Camera started.", "success");
+      } catch (error) {
+        setStatusMessage(messageBox, "Camera access failed. Check browser permissions.", "error");
+      }
+    });
+  }
 
-cameraPreview.srcObject = currentCameraStream;
-      setStatusMessage(messageBox, "Camera started.", "success");
-    } catch (error) {
-      setStatusMessage(messageBox, "Camera access failed.", "error");
-    }
-  });
+  if (capturePhotoBtn) {
+    capturePhotoBtn.addEventListener("click", () => {
+      if (!currentCameraStream) {
+        setStatusMessage(messageBox, "Start camera first.", "warning");
+        return;
+      }
+      const context = cameraCanvas.getContext("2d");
+      cameraCanvas.width = cameraPreview.videoWidth || 320;
+      cameraCanvas.height = cameraPreview.videoHeight || 220;
+      context.drawImage(cameraPreview, 0, 0, cameraCanvas.width, cameraCanvas.height);
+      currentPatientPhotoData = cameraCanvas.toDataURL("image/png");
+      patientPhotoPreview.src = currentPatientPhotoData;
+      setStatusMessage(messageBox, "Photo captured successfully.", "success");
+    });
+  }
 
-  capturePhotoBtn.addEventListener("click", () => {
-    if (!currentCameraStream) {
-      setStatusMessage(messageBox, "Start camera first.", "warning");
-      return;
-    }
-
-    const context = cameraCanvas.getContext("2d");
-    cameraCanvas.width = cameraPreview.videoWidth || 320;
-    cameraCanvas.height = cameraPreview.videoHeight || 220;
-    context.drawImage(cameraPreview, 0, 0, cameraCanvas.width, cameraCanvas.height);
-    currentPatientPhotoData = cameraCanvas.toDataURL("image/png");
-    patientPhotoPreview.src = currentPatientPhotoData;
-    setStatusMessage(messageBox, "Photo captured successfully.", "success");
-  });
-
-  stopCameraBtn.addEventListener("click", stopCamera);
+  if (stopCameraBtn) stopCameraBtn.addEventListener("click", stopCamera);
 }
 
 function handlePhotoUpload(event) {
@@ -309,7 +299,7 @@ function handlePhotoUpload(event) {
   const reader = new FileReader();
   reader.onload = function (e) {
     currentPatientPhotoData = e.target.result;
-    patientPhotoPreview.src = currentPatientPhotoData;
+    if (patientPhotoPreview) patientPhotoPreview.src = currentPatientPhotoData;
   };
   reader.readAsDataURL(file);
 }
@@ -318,30 +308,22 @@ function stopCamera() {
   if (currentCameraStream) {
     currentCameraStream.getTracks().forEach((track) => track.stop());
     currentCameraStream = null;
-    cameraPreview.srcObject = null;
+    if (cameraPreview) cameraPreview.srcObject = null;
     setStatusMessage(messageBox, "Camera stopped.", "default");
   }
 }
 
 function setupPatientEvents() {
-  saveBtn.addEventListener("click", handleSavePatient);
-  clearBtn.addEventListener("click", clearPatientForm);
-  printIdBtn.addEventListener("click", printCurrentPatientCard);
-  patientSearchInput.addEventListener("input", renderPatients);
+  if (saveBtn) saveBtn.addEventListener("click", handleSavePatient);
+  if (clearBtn) clearBtn.addEventListener("click", clearPatientForm);
+  if (printIdBtn) printIdBtn.addEventListener("click", printCurrentPatientCard);
+  if (patientSearchInput) patientSearchInput.addEventListener("input", renderPatients);
 }
 
 function handleSavePatient() {
   clearFieldErrors([
-    "nicError",
-    "fullNameError",
-    "emailError",
-    "dobError",
-    "genderError",
-    "phoneError",
-    "addressError",
-    "emergencyContactError",
-    "bloodGroupError",
-    "medicalNotesError"
+    "nicError", "fullNameError", "emailError", "dobError", "genderError",
+    "phoneError", "addressError", "emergencyContactError", "bloodGroupError", "medicalNotesError"
   ]);
 
   const editingPatientId = document.getElementById("editingPatientId").value;
@@ -381,6 +363,15 @@ function handleSavePatient() {
   if (dob && new Date(dob) > new Date()) {
     document.getElementById("dobError").textContent = "Date of birth cannot be in the future.";
     hasError = true;
+  }
+
+  // FIX: Validate that patient is not younger than 0 (impossible DOB)
+  if (dob) {
+    const age = calculateAge(dob);
+    if (age > 150) {
+      document.getElementById("dobError").textContent = "Enter a realistic date of birth.";
+      hasError = true;
+    }
   }
 
   if (!gender) {
@@ -441,11 +432,11 @@ function handleSavePatient() {
     patient.photo = currentPatientPhotoData || patient.photo || "";
 
     savePatients(patients);
-    setStatusMessage(messageBox, "Patient updated successfully.", "success");
+    setStatusMessage(messageBox, `Patient ${editingPatientId} updated successfully.`, "success");
   } else {
-    const patientId = generatePatientId(patients);
+    const patientId = generatePatientId();
 
-const newPatient = {
+    const newPatient = {
       patientId,
       nic,
       fullName,
@@ -457,7 +448,8 @@ const newPatient = {
       emergencyContact,
       bloodGroup,
       medicalNotes,
-      photo: currentPatientPhotoData || ""
+      photo: currentPatientPhotoData || "",
+      registeredDate: new Date().toLocaleDateString()
     };
 
     patients.push(newPatient);
@@ -474,22 +466,14 @@ const newPatient = {
 }
 
 function clearPatientForm(resetMessage = true) {
-  patientForm.reset();
+  if (patientForm) patientForm.reset();
   document.getElementById("editingPatientId").value = "";
   document.getElementById("generatedPatientId").textContent = "Auto generated on save";
-  patientPhotoPreview.src = "";
+  if (patientPhotoPreview) patientPhotoPreview.src = "";
   currentPatientPhotoData = "";
   clearFieldErrors([
-    "nicError",
-    "fullNameError",
-    "emailError",
-    "dobError",
-    "genderError",
-    "phoneError",
-    "addressError",
-    "emergencyContactError",
-    "bloodGroupError",
-    "medicalNotesError"
+    "nicError", "fullNameError", "emailError", "dobError", "genderError",
+    "phoneError", "addressError", "emergencyContactError", "bloodGroupError", "medicalNotesError"
   ]);
   if (resetMessage) {
     setStatusMessage(messageBox, "Patient form cleared.", "default");
@@ -498,7 +482,7 @@ function clearPatientForm(resetMessage = true) {
 
 function renderPatients() {
   const patients = getPatients();
-  const keyword = patientSearchInput.value.trim().toLowerCase();
+  const keyword = patientSearchInput ? patientSearchInput.value.trim().toLowerCase() : "";
 
   const filtered = patients.filter((patient) => {
     return (
@@ -508,6 +492,7 @@ function renderPatients() {
     );
   });
 
+  if (!patientTableBody) return;
   patientTableBody.innerHTML = "";
 
   if (filtered.length === 0) {
@@ -558,16 +543,19 @@ window.editPatient = function (patientId) {
   document.getElementById("bloodGroup").value = patient.bloodGroup || "";
   document.getElementById("medicalNotes").value = patient.medicalNotes || "";
   currentPatientPhotoData = patient.photo || "";
-  patientPhotoPreview.src = patient.photo || "";
+  if (patientPhotoPreview) patientPhotoPreview.src = patient.photo || "";
 
   setStatusMessage(messageBox, `Editing patient ${patient.patientId}`, "warning");
 };
 
 window.deletePatient = function (patientId) {
-  const ok = confirm("Are you sure you want to delete this patient?");
+  const patient = getPatients().find((p) => p.patientId === patientId);
+  if (!patient) return;
+
+  const ok = confirm(`Are you sure you want to delete patient "${patient.fullName}"? This will also remove their appointments.`);
   if (!ok) return;
 
-let patients = getPatients();
+  let patients = getPatients();
   patients = patients.filter((p) => p.patientId !== patientId);
   savePatients(patients);
 
@@ -575,16 +563,22 @@ let patients = getPatients();
   appointments = appointments.filter((a) => a.patientId !== patientId);
   saveAppointments(appointments);
 
+  // FIX: Also remove from POS queue
+  let posQueue = getPOSQueue();
+  posQueue = posQueue.filter((q) => q.patientId !== patientId);
+  savePOSQueue(posQueue);
+
   renderPatients();
   renderAppointments();
   populatePatientDropdown();
   populatePatientSearchList();
-  setStatusMessage(messageBox, "Patient deleted successfully.", "success");
+  setStatusMessage(messageBox, "Patient and related appointments deleted.", "success");
 };
 
 function populatePatientDropdown(filteredPatients = null) {
   const patients = filteredPatients || getPatients();
   const patientSelect = document.getElementById("appointmentPatientId");
+  if (!patientSelect) return;
   patientSelect.innerHTML = `<option value="">Select patient</option>`;
 
   patients.forEach((patient) => {
@@ -599,28 +593,27 @@ function populatePatientDropdown(filteredPatients = null) {
 function populatePatientSearchList() {
   const patients = getPatients();
   const list = document.getElementById("patientSearchList");
+  if (!list) return;
   list.innerHTML = "";
 
   patients.forEach((patient) => {
-    list.innerHTML += `
-      <option value="${patient.patientId} - ${patient.fullName} - ${patient.nic}"></option>
-   ` ;
+    list.innerHTML += `<option value="${patient.patientId} - ${patient.fullName} - ${patient.nic}"></option>`;
   });
 }
 
 function setupAppointmentEvents() {
-  appointmentSaveBtn.addEventListener("click", handleSaveAppointment);
-  appointmentClearBtn.addEventListener("click", clearAppointmentForm);
-  appointmentSearchInput.addEventListener("input", renderAppointments);
+  if (appointmentSaveBtn) appointmentSaveBtn.addEventListener("click", handleSaveAppointment);
+  if (appointmentClearBtn) appointmentClearBtn.addEventListener("click", clearAppointmentForm);
+  if (appointmentSearchInput) appointmentSearchInput.addEventListener("input", renderAppointments);
 
-  document.getElementById("appointmentPatientSearch").addEventListener("input", handlePatientSearchForAppointment);
-  document.getElementById("appointmentPatientId").addEventListener("change", handlePatientSelectionChange);
-  document.getElementById("medicalNeed").addEventListener("change", filterDoctors);
-  document.getElementById("casePriority").addEventListener("change", updateConsultationFee);
-  document.getElementById("doctorSearch").addEventListener("input", filterDoctors);
-  document.getElementById("doctorSelect").addEventListener("change", updateConsultationFee);
-  document.getElementById("appointmentDate").addEventListener("change", buildTimeSlots);
-  document.getElementById("paymentRoute").addEventListener("change", handlePaymentRouteChange);
+  document.getElementById("appointmentPatientSearch")?.addEventListener("input", handlePatientSearchForAppointment);
+  document.getElementById("appointmentPatientId")?.addEventListener("change", handlePatientSelectionChange);
+  document.getElementById("medicalNeed")?.addEventListener("change", filterDoctors);
+  document.getElementById("casePriority")?.addEventListener("change", updateConsultationFee);
+  document.getElementById("doctorSearch")?.addEventListener("input", filterDoctors);
+  document.getElementById("doctorSelect")?.addEventListener("change", updateConsultationFee);
+  document.getElementById("appointmentDate")?.addEventListener("change", buildTimeSlots);
+  document.getElementById("paymentRoute")?.addEventListener("change", handlePaymentRouteChange);
 }
 
 function handlePatientSearchForAppointment() {
@@ -688,18 +681,19 @@ function filterDoctors() {
   const doctorSearchList = document.getElementById("doctorSearchList");
   const doctors = getSuggestedDoctors();
 
+  if (!doctorSelect) return;
   doctorSelect.innerHTML = `<option value="">Select doctor</option>`;
-  doctorSearchList.innerHTML = "";
+  if (doctorSearchList) doctorSearchList.innerHTML = "";
 
   doctors.forEach((doctor) => {
     doctorSelect.innerHTML += `
       <option value="${doctor.doctorId}">
         ${doctor.name} - ${doctor.specialization}
       </option>
-   ` ;
-    doctorSearchList.innerHTML += `
-      <option value="${doctor.name} - ${doctor.specialization}"></option>
     `;
+    if (doctorSearchList) {
+      doctorSearchList.innerHTML += `<option value="${doctor.name} - ${doctor.specialization}"></option>`;
+    }
   });
 
   updateConsultationFee();
@@ -715,6 +709,7 @@ function updateConsultationFee() {
   const doctorId = document.getElementById("doctorSelect").value;
   const doctor = getDoctorById(doctorId);
   const feeInput = document.getElementById("consultationFee");
+  if (!feeInput) return;
 
   let fee = 0;
 
@@ -736,6 +731,7 @@ function updateConsultationFee() {
 function handlePaymentRouteChange() {
   const paymentRoute = document.getElementById("paymentRoute").value;
   const paymentMethod = document.getElementById("paymentMethod");
+  if (!paymentMethod) return;
 
   if (paymentRoute === "SEND_TO_POS") {
     paymentMethod.value = "";
@@ -774,16 +770,22 @@ function getFreeSlotsForDoctor(doctorId, selectedDate, editingAppointmentId = ""
 }
 
 function buildTimeSlots() {
-  const doctorId = document.getElementById("doctorSelect").value;
-  const selectedDate = document.getElementById("appointmentDate").value;
-  const editingAppointmentId = document.getElementById("editingAppointmentId").value;
+  const doctorId = document.getElementById("doctorSelect")?.value;
+  const selectedDate = document.getElementById("appointmentDate")?.value;
+  const editingAppointmentId = document.getElementById("editingAppointmentId")?.value;
   const appointmentTime = document.getElementById("appointmentTime");
+  if (!appointmentTime) return;
 
   appointmentTime.innerHTML = `<option value="">Select time slot</option>`;
 
   if (!doctorId || !selectedDate) return;
 
   const freeSlots = getFreeSlotsForDoctor(doctorId, selectedDate, editingAppointmentId);
+
+  if (freeSlots.length === 0) {
+    appointmentTime.innerHTML += `<option value="" disabled>No slots available for this doctor on this date</option>`;
+    return;
+  }
 
   freeSlots.forEach((slot) => {
     appointmentTime.innerHTML += `<option value="${slot}">${slot}</option>`;
@@ -837,11 +839,7 @@ function upsertAppointmentInPOSQueue(appointment, patient, doctor) {
   const existingIndex = posQueue.findIndex((item) => item.appointmentId === appointment.appointmentId);
 
   if (existingIndex >= 0) {
-    posQueue[existingIndex] = {
-      ...posQueue[existingIndex],
-      ...payload,
-      processed: false
-    };
+    posQueue[existingIndex] = { ...posQueue[existingIndex], ...payload, processed: false };
   } else {
     posQueue.push(payload);
   }
@@ -857,17 +855,9 @@ function removeAppointmentFromPOSQueue(appointmentId) {
 
 function handleSaveAppointment() {
   clearFieldErrors([
-    "appointmentPatientSearchError",
-    "appointmentPatientError",
-    "casePriorityError",
-    "medicalNeedError",
-    "appointmentReasonError",
-    "doctorSearchError",
-    "doctorSelectError",
-    "appointmentDateError",
-    "appointmentTimeError",
-    "paymentRouteError",
-    "paymentMethodError"
+    "appointmentPatientSearchError", "appointmentPatientError", "casePriorityError",
+    "medicalNeedError", "appointmentReasonError", "doctorSearchError", "doctorSelectError",
+    "appointmentDateError", "appointmentTimeError", "paymentRouteError", "paymentMethodError"
   ]);
 
   const editingAppointmentId = document.getElementById("editingAppointmentId").value;
@@ -900,7 +890,7 @@ function handleSaveAppointment() {
     hasError = true;
   }
 
-if (appointmentReason.length < 3) {
+  if (appointmentReason.length < 3) {
     document.getElementById("appointmentReasonError").textContent = "Enter valid reason or symptoms.";
     hasError = true;
   }
@@ -941,10 +931,13 @@ if (appointmentReason.length < 3) {
     hasError = true;
   }
 
-  const freeSlots = getFreeSlotsForDoctor(doctorId, appointmentDate, editingAppointmentId);
-  if (appointmentTime && !freeSlots.includes(appointmentTime)) {
-    document.getElementById("appointmentTimeError").textContent = "This slot is no longer available.";
-    hasError = true;
+  // FIX #16: Re-validate slot availability at save time to prevent duplicates
+  if (doctorId && appointmentDate && appointmentTime && !hasError) {
+    const freeSlots = getFreeSlotsForDoctor(doctorId, appointmentDate, editingAppointmentId);
+    if (!freeSlots.includes(appointmentTime)) {
+      document.getElementById("appointmentTimeError").textContent = "This slot is no longer available. Please choose another.";
+      hasError = true;
+    }
   }
 
   if (hasError) {
@@ -982,9 +975,9 @@ if (appointmentReason.length < 3) {
       removeAppointmentFromPOSQueue(appointment.appointmentId);
     }
 
-    setStatusMessage(appointmentMessageBox, "Appointment updated successfully.", "success");
+    setStatusMessage(appointmentMessageBox, `Appointment ${editingAppointmentId} updated successfully.`, "success");
   } else {
-    const appointmentId = generateAppointmentId(appointments);
+    const appointmentId = generateAppointmentId();
 
     const newAppointment = {
       appointmentId,
@@ -1023,31 +1016,24 @@ if (appointmentReason.length < 3) {
       saveReceipts(receipts);
     }
 
-    setStatusMessage(appointmentMessageBox, `Appointment saved successfully. ID: ${appointmentId}`, "success");
+    setStatusMessage(appointmentMessageBox, `Appointment saved. ID: ${appointmentId}`, "success");
   }
 
-clearAppointmentForm(false);
+  clearAppointmentForm(false);
   renderAppointments();
 }
 
 function clearAppointmentForm(resetMessage = true) {
-  appointmentForm.reset();
+  if (appointmentForm) appointmentForm.reset();
   document.getElementById("editingAppointmentId").value = "";
   document.getElementById("appointmentStatus").value = "BOOKED";
   document.getElementById("consultationFee").value = "";
-  document.getElementById("paymentMethod").disabled = false;
+  const pm = document.getElementById("paymentMethod");
+  if (pm) pm.disabled = false;
   clearFieldErrors([
-    "appointmentPatientSearchError",
-    "appointmentPatientError",
-    "casePriorityError",
-    "medicalNeedError",
-    "appointmentReasonError",
-    "doctorSearchError",
-    "doctorSelectError",
-    "appointmentDateError",
-    "appointmentTimeError",
-    "paymentRouteError",
-    "paymentMethodError"
+    "appointmentPatientSearchError", "appointmentPatientError", "casePriorityError",
+    "medicalNeedError", "appointmentReasonError", "doctorSearchError", "doctorSelectError",
+    "appointmentDateError", "appointmentTimeError", "paymentRouteError", "paymentMethodError"
   ]);
   populatePatientDropdown();
   filterDoctors();
@@ -1058,7 +1044,8 @@ function clearAppointmentForm(resetMessage = true) {
 
 function renderAppointments() {
   const appointments = getAppointments();
-  const keyword = appointmentSearchInput.value.trim().toLowerCase();
+  const keyword = appointmentSearchInput ? appointmentSearchInput.value.trim().toLowerCase() : "";
+  const today = formatDate(new Date());
 
   const filtered = appointments.filter((appointment) => {
     return (
@@ -1068,6 +1055,7 @@ function renderAppointments() {
     );
   });
 
+  if (!appointmentTableBody) return;
   appointmentTableBody.innerHTML = "";
 
   if (filtered.length === 0) {
@@ -1076,15 +1064,22 @@ function renderAppointments() {
   }
 
   filtered.forEach((appointment) => {
+    // FIX #17: Visually flag past UPCOMING/BOOKED appointments
+    const isPast = appointment.appointmentDate < today && appointment.appointmentStatus === "BOOKED";
+
     const statusClass =
       appointment.appointmentStatus === "BOOKED"
-        ? "badge-booked"
+        ? isPast ? "badge-pending" : "badge-paid"
         : appointment.appointmentStatus === "CANCELLED"
         ? "badge-cancelled"
         : "badge-paid";
 
+    const statusLabel = isPast && appointment.appointmentStatus === "BOOKED"
+      ? "OVERDUE"
+      : appointment.appointmentStatus;
+
     appointmentTableBody.innerHTML += `
-      <tr>
+      <tr${isPast ? ' style="opacity:0.7;"' : ""}>
         <td>${appointment.appointmentId}</td>
         <td>${appointment.appointmentPatient}</td>
         <td>${appointment.doctorName}</td>
@@ -1094,11 +1089,11 @@ function renderAppointments() {
         <td>${appointment.appointmentTime}</td>
         <td>Rs. ${Number(appointment.fee).toFixed(2)}</td>
         <td>${appointment.paymentRoute === "PAY_HERE" ? '<span class="badge badge-paid">Pay Here</span>' : '<span class="badge badge-pending">Send to POS</span>'}</td>
-        <td><span class="badge ${statusClass}">${appointment.appointmentStatus}</span></td>
+        <td><span class="badge ${statusClass}">${statusLabel}</span></td>
         <td>
           <div class="row-actions">
-            <button class="action-btn edit" onclick="editAppointment('${appointment.appointmentId}')">Edit</button>
-            <button class="action-btn delete" onclick="cancelAppointment('${appointment.appointmentId}')">Cancel</button>
+            ${appointment.appointmentStatus !== "CANCELLED" ? `<button class="action-btn edit" onclick="editAppointment('${appointment.appointmentId}')">Edit</button>` : ""}
+            ${appointment.appointmentStatus !== "CANCELLED" ? `<button class="action-btn delete" onclick="cancelAppointment('${appointment.appointmentId}')">Cancel</button>` : ""}
           </div>
         </td>
       </tr>
@@ -1109,6 +1104,11 @@ function renderAppointments() {
 window.editAppointment = function (appointmentId) {
   const appointment = getAppointments().find((a) => a.appointmentId === appointmentId);
   if (!appointment) return;
+
+  if (appointment.appointmentStatus === "CANCELLED") {
+    setStatusMessage(appointmentMessageBox, "Cannot edit a cancelled appointment.", "error");
+    return;
+  }
 
   showSection("section-add-appointment");
 
@@ -1124,8 +1124,7 @@ window.editAppointment = function (appointmentId) {
   document.getElementById("appointmentTime").value = appointment.appointmentTime;
   document.getElementById("paymentRoute").value = appointment.paymentRoute;
   handlePaymentRouteChange();
-
-document.getElementById("paymentMethod").value = appointment.paymentMethod || "";
+  document.getElementById("paymentMethod").value = appointment.paymentMethod || "";
   document.getElementById("appointmentStatus").value = appointment.appointmentStatus;
   updateConsultationFee();
   document.getElementById("consultationFee").value = Number(appointment.fee || 0).toFixed(2);
@@ -1134,47 +1133,64 @@ document.getElementById("paymentMethod").value = appointment.paymentMethod || ""
 };
 
 window.cancelAppointment = function (appointmentId) {
-  const ok = confirm("Are you sure you want to cancel this appointment?");
+  const appointment = getAppointments().find((a) => a.appointmentId === appointmentId);
+  if (!appointment) return;
+
+  if (appointment.appointmentStatus === "CANCELLED") {
+    setStatusMessage(appointmentMessageBox, "Appointment is already cancelled.", "warning");
+    return;
+  }
+
+  const ok = confirm(`Cancel appointment ${appointmentId} for ${appointment.appointmentPatient}?`);
   if (!ok) return;
 
   let appointments = getAppointments();
-  const appointment = appointments.find((a) => a.appointmentId === appointmentId);
-  if (!appointment) return;
+  const appt = appointments.find((a) => a.appointmentId === appointmentId);
+  if (!appt) return;
 
-  appointment.appointmentStatus = "CANCELLED";
+  appt.appointmentStatus = "CANCELLED";
   saveAppointments(appointments);
   removeAppointmentFromPOSQueue(appointmentId);
   renderAppointments();
-  setStatusMessage(appointmentMessageBox, "Appointment cancelled successfully.", "success");
+  setStatusMessage(appointmentMessageBox, `Appointment ${appointmentId} cancelled.`, "success");
 };
 
 function fillPatientCard(patient) {
-  document.getElementById("cardPatientId").textContent = patient.patientId || "-";
-  document.getElementById("cardName").textContent = patient.fullName || "-";
-  document.getElementById("cardNic").textContent = patient.nic || "-";
-  document.getElementById("cardDob").textContent = patient.dob || "-";
-  document.getElementById("cardGender").textContent = patient.gender || "-";
-  document.getElementById("cardBlood").textContent = patient.bloodGroup || "-";
-  document.getElementById("cardPhone").textContent = patient.phone || "-";
-  document.getElementById("cardAddress").textContent = patient.address || "-";
-  document.getElementById("cardEmergency").textContent = patient.emergencyContact || "-";
-  document.getElementById("cardIssuedDate").textContent = new Date().toISOString().split("T")[0];
-  document.getElementById("cardMedicalNotes").textContent = patient.medicalNotes || "No special notes";
-  document.getElementById("cardAccessCode").textContent = `WC-${patient.patientId || "PAT-000"}`;
-  document.getElementById("fakeQrCode").textContent = patient.patientId || "PAT-000";
+  const setText = (id, val) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = val;
+  };
+
+  setText("cardPatientId", patient.patientId || "-");
+  setText("cardName", patient.fullName || "-");
+  setText("cardNic", patient.nic || "-");
+  setText("cardDob", patient.dob || "-");
+  setText("cardGender", patient.gender || "-");
+  setText("cardBlood", patient.bloodGroup || "-");
+  setText("cardPhone", patient.phone || "-");
+  setText("cardAddress", patient.address || "-");
+  setText("cardEmergency", patient.emergencyContact || "-");
+  setText("cardIssuedDate", new Date().toISOString().split("T")[0]);
+  setText("cardMedicalNotes", patient.medicalNotes || "No special notes");
+  setText("cardAccessCode", `WC-${patient.patientId || "PAT-000"}`);
+  setText("fakeQrCode", patient.patientId || "PAT-000");
 
   const photo = document.getElementById("cardPhoto");
-  photo.src = patient.photo || "";
+  if (photo) photo.src = patient.photo || "";
 }
 
+// FIX #5: setTimeout for patient card print too
 function printPatientCardById(patientId) {
   const patient = getPatients().find((p) => p.patientId === patientId);
   if (!patient) return;
 
   fillPatientCard(patient);
-  document.getElementById("printCardWrap").style.display = "block";
-  window.print();
-  document.getElementById("printCardWrap").style.display = "none";
+  const wrap = document.getElementById("printCardWrap");
+  if (wrap) wrap.style.display = "block";
+  setTimeout(() => {
+    window.print();
+    setTimeout(() => { if (wrap) wrap.style.display = "none"; }, 500);
+  }, 100);
 }
 
 function printCurrentPatientCard() {
@@ -1183,6 +1199,5 @@ function printCurrentPatientCard() {
     setStatusMessage(messageBox, "Save or edit a patient first before printing the ID card.", "warning");
     return;
   }
-
   printPatientCardById(editingPatientId);
 }

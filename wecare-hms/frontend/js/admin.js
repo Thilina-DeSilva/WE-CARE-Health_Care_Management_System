@@ -24,35 +24,16 @@ let stockMessageBox;
 let revenueChart;
 let salesChart;
 
+// Track last created user for badge printing
+let lastCreatedUser = null;
+
 const SPECIALIZATIONS = [
-  "Allergy and Immunology",
-  "Anesthesiology",
-  "Cardiology",
-  "Cardiothoracic Surgery",
-  "Dermatology",
-  "Emergency Medicine",
-  "Endocrinology",
-  "Family Medicine",
-  "Gastroenterology",
-  "General Medicine",
-  "General Surgery",
-  "Gynecology",
-  "Hematology",
-  "Internal Medicine",
-  "Nephrology",
-  "Neurology",
-  "Neurosurgery",
-  "Obstetrics",
-  "Oncology",
-  "Ophthalmology",
-  "Orthopedics",
-  "Otolaryngology (ENT)",
-  "Pediatrics",
-  "Psychiatry",
-  "Pulmonology",
-  "Radiology",
-  "Rheumatology",
-  "Urology"
+  "Allergy and Immunology","Anesthesiology","Cardiology","Cardiothoracic Surgery",
+  "Dermatology","Emergency Medicine","Endocrinology","Family Medicine",
+  "Gastroenterology","General Medicine","General Surgery","Gynecology",
+  "Hematology","Internal Medicine","Nephrology","Neurology","Neurosurgery",
+  "Obstetrics","Oncology","Ophthalmology","Orthopedics","Otolaryngology (ENT)",
+  "Pediatrics","Psychiatry","Pulmonology","Radiology","Rheumatology","Urology"
 ];
 
 function getUsers() {
@@ -132,11 +113,10 @@ function getInvoices() {
 function setStatusMessage(element, text, type = "default") {
   if (!element) return;
   element.textContent = text;
-
-  if (type === "success") element.style.color = "#16a34a";
-  else if (type === "error") element.style.color = "#dc2626";
-  else if (type === "warning") element.style.color = "#d97706";
-  else element.style.color = "#6b7280";
+  if (type === "success") element.style.color = "#10b981";
+  else if (type === "error") element.style.color = "#f04040";
+  else if (type === "warning") element.style.color = "#f59e0b";
+  else element.style.color = "#94a3b8";
 }
 
 function clearFieldErrors(ids) {
@@ -149,10 +129,7 @@ function clearFieldErrors(ids) {
 function populateSpecializations() {
   const datalist = document.getElementById("specializationList");
   if (!datalist) return;
-
-  datalist.innerHTML = SPECIALIZATIONS.map(
-    (item) => `<option value="${item}"></option>`
-  ).join("");
+  datalist.innerHTML = SPECIALIZATIONS.map((item) => `<option value="${item}"></option>`).join("");
 }
 
 function validEmail(email) {
@@ -168,13 +145,7 @@ function validLicense(license) {
 }
 
 function generateStaffId(role, list) {
-  const prefixMap = {
-    ADMIN: "ADM",
-    RECEPTIONIST: "REC",
-    DOCTOR: "DOC",
-    PHARMACIST: "PHA"
-  };
-
+  const prefixMap = { ADMIN: "ADM", RECEPTIONIST: "REC", DOCTOR: "DOC", PHARMACIST: "PHA" };
   const prefix = prefixMap[role] || "USR";
   const count = list.filter((item) => item.staffId && item.staffId.startsWith(prefix)).length + 1;
   return `${prefix}-${String(count).padStart(3, "0")}`;
@@ -248,10 +219,7 @@ function renderOverview() {
   const alertsList = document.getElementById("alertsList");
   alertsList.innerHTML = "";
 
-  const lowStockItems = getInventory().filter(
-    (item) => item.type === "MEDICINE" && Number(item.stock) <= 10
-  );
-
+  const lowStockItems = getInventory().filter((item) => item.type === "MEDICINE" && Number(item.stock) <= 10);
   const alerts = [];
 
   if (lowStockItems.length > 0) alerts.push(`${lowStockItems.length} item(s) are low in stock`);
@@ -269,13 +237,7 @@ function setupUserEventListeners() {
   if (!saveUserBtn || !clearUserBtn) return;
 
   saveUserBtn.addEventListener("click", () => {
-    clearFieldErrors([
-      "userNameError",
-      "userEmailError",
-      "userPhoneError",
-      "userRoleError",
-      "userStatusError"
-    ]);
+    clearFieldErrors(["userNameError","userEmailError","userPhoneError","userRoleError","userStatusError"]);
 
     const editingUserId = document.getElementById("editingUserId").value;
     const name = document.getElementById("userName").value.trim();
@@ -296,7 +258,7 @@ function setupUserEventListeners() {
       hasError = true;
     }
 
-if (!validPhone(phone)) {
+    if (!validPhone(phone)) {
       document.getElementById("userPhoneError").textContent = "Phone must be 10 digits and start with 0.";
       hasError = true;
     }
@@ -313,10 +275,7 @@ if (!validPhone(phone)) {
 
     let users = getUsers();
 
-    const duplicateEmail = users.find(
-      (u) => u.email === email && u.staffId !== editingUserId
-    );
-
+    const duplicateEmail = users.find((u) => u.email === email && u.staffId !== editingUserId);
     if (duplicateEmail) {
       document.getElementById("userEmailError").textContent = "This email is already used.";
       hasError = true;
@@ -339,34 +298,42 @@ if (!validPhone(phone)) {
 
       saveUsers(users);
       setStatusMessage(userMessageBox, "User updated successfully.", "success");
+
+      // Show updated credentials
+      document.getElementById("generatedStaffId").textContent = user.staffId;
+      document.getElementById("generatedPassword").textContent = user.tempPassword || "-";
+
+      document.getElementById("editingUserId").value = "";
+      document.getElementById("userForm").reset();
     } else {
       const staffId = generateStaffId(role, users);
       const tempPassword = generateTempPassword(name, role);
 
-      users.push({
-        staffId,
-        name,
-        email,
-        phone,
-        role,
-        status,
-        tempPassword
-      });
-
+      const newUser = { staffId, name, email, phone, role, status, tempPassword };
+      users.push(newUser);
       saveUsers(users);
 
+      // Keep generated credentials visible — DO NOT reset before showing them
       document.getElementById("generatedStaffId").textContent = staffId;
       document.getElementById("generatedPassword").textContent = tempPassword;
 
+      // Store for quick badge print
+      lastCreatedUser = newUser;
+
       setStatusMessage(
         userMessageBox,
-        `User created successfully. Generated ID: ${staffId}`,
+        `✓ User created! ID: ${staffId} — Credentials shown above. You can print the badge now.`,
         "success"
       );
+
+      // Reset form fields ONLY — not the generated credentials box
+      document.getElementById("userName").value = "";
+      document.getElementById("userEmail").value = "";
+      document.getElementById("userPhone").value = "";
+      document.getElementById("userRole").value = "";
+      document.getElementById("userStatus").value = "";
     }
 
-    document.getElementById("userForm").reset();
-    document.getElementById("editingUserId").value = "";
     renderUsers();
     renderOverview();
   });
@@ -376,15 +343,9 @@ if (!validPhone(phone)) {
     document.getElementById("editingUserId").value = "";
     document.getElementById("generatedStaffId").textContent = "Will generate on save";
     document.getElementById("generatedPassword").textContent = "Will generate on save";
+    lastCreatedUser = null;
 
-    clearFieldErrors([
-      "userNameError",
-      "userEmailError",
-      "userPhoneError",
-      "userRoleError",
-      "userStatusError"
-    ]);
-
+    clearFieldErrors(["userNameError","userEmailError","userPhoneError","userRoleError","userStatusError"]);
     setStatusMessage(userMessageBox, "User form cleared.", "default");
   });
 
@@ -409,6 +370,7 @@ function editUser(staffId) {
   document.getElementById("generatedPassword").textContent = user.tempPassword || "-";
 
   setStatusMessage(userMessageBox, `Editing user ${user.staffId}`, "warning");
+  window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
 function deleteUser(staffId) {
@@ -432,8 +394,8 @@ function renderUsers() {
     return;
   }
 
-users.forEach((user) => {
-    userTableBody.innerHTML += 
+  users.forEach((user) => {
+    userTableBody.innerHTML +=
       `<tr>
         <td>${user.staffId}</td>
         <td>${user.name}</td>
@@ -448,8 +410,7 @@ users.forEach((user) => {
             <button class="action-btn delete" onclick="deleteUser('${user.staffId}')">Delete</button>
           </div>
         </td>
-      </tr>
-    `;
+      </tr>`;
   });
 }
 
@@ -458,16 +419,7 @@ function setupDoctorEventListeners() {
   if (!saveDoctorBtn || !clearDoctorBtn) return;
 
   saveDoctorBtn.addEventListener("click", () => {
-    clearFieldErrors([
-      "doctorNameError",
-      "doctorSpecializationError",
-      "doctorLicenseError",
-      "doctorEmailError",
-      "doctorPhoneError",
-      "doctorRoomError",
-      "doctorExperienceError",
-      "doctorScheduleError"
-    ]);
+    clearFieldErrors(["doctorNameError","doctorSpecializationError","doctorLicenseError","doctorEmailError","doctorPhoneError","doctorRoomError","doctorExperienceError","doctorScheduleError"]);
 
     const editingDoctorId = document.getElementById("editingDoctorId").value;
     const name = document.getElementById("doctorFullName").value.trim();
@@ -481,92 +433,33 @@ function setupDoctorEventListeners() {
 
     let hasError = false;
 
-    if (name.length < 3) {
-      document.getElementById("doctorNameError").textContent = "Doctor name must be at least 3 characters.";
-      hasError = true;
-    }
-
-    if (!SPECIALIZATIONS.includes(specialization)) {
-      document.getElementById("doctorSpecializationError").textContent = "Select a valid specialization from the list.";
-      hasError = true;
-    }
-
-    if (!validLicense(license)) {
-      document.getElementById("doctorLicenseError").textContent = "Enter a valid license number.";
-      hasError = true;
-    }
-
-    if (!validEmail(email)) {
-      document.getElementById("doctorEmailError").textContent = "Enter a valid doctor email.";
-      hasError = true;
-    }
-
-    if (!validPhone(phone)) {
-      document.getElementById("doctorPhoneError").textContent = "Phone must be 10 digits and start with 0.";
-      hasError = true;
-    }
-
-    if (!room) {
-      document.getElementById("doctorRoomError").textContent = "Enter room number.";
-      hasError = true;
-    }
-
-    if (experience === "" || Number(experience) < 0 || Number(experience) > 60) {
-      document.getElementById("doctorExperienceError").textContent = "Enter valid years of experience.";
-      hasError = true;
-    }
-
-    if (schedule.length < 5) {
-      document.getElementById("doctorScheduleError").textContent = "Enter a proper schedule.";
-      hasError = true;
-    }
+    if (name.length < 3) { document.getElementById("doctorNameError").textContent = "Doctor name must be at least 3 characters."; hasError = true; }
+    if (!SPECIALIZATIONS.includes(specialization)) { document.getElementById("doctorSpecializationError").textContent = "Select a valid specialization from the list."; hasError = true; }
+    if (!validLicense(license)) { document.getElementById("doctorLicenseError").textContent = "Enter a valid license number."; hasError = true; }
+    if (!validEmail(email)) { document.getElementById("doctorEmailError").textContent = "Enter a valid doctor email."; hasError = true; }
+    if (!validPhone(phone)) { document.getElementById("doctorPhoneError").textContent = "Phone must be 10 digits and start with 0."; hasError = true; }
+    if (!room) { document.getElementById("doctorRoomError").textContent = "Enter room number."; hasError = true; }
+    if (experience === "" || Number(experience) < 0 || Number(experience) > 60) { document.getElementById("doctorExperienceError").textContent = "Enter valid years of experience."; hasError = true; }
+    if (schedule.length < 5) { document.getElementById("doctorScheduleError").textContent = "Enter a proper schedule."; hasError = true; }
 
     let doctors = getDoctors();
 
-    const duplicateLicense = doctors.find(
-      (d) => d.license === license && d.doctorId !== editingDoctorId
-    );
+    const duplicateLicense = doctors.find((d) => d.license === license && d.doctorId !== editingDoctorId);
+    if (duplicateLicense) { document.getElementById("doctorLicenseError").textContent = "License number already exists."; hasError = true; }
 
-    if (duplicateLicense) {
-      document.getElementById("doctorLicenseError").textContent = "License number already exists.";
-      hasError = true;
-    }
-
-    if (hasError) {
-      setStatusMessage(doctorMessageBox, "Please fix the highlighted doctor form errors.", "error");
-      return;
-    }
+    if (hasError) { setStatusMessage(doctorMessageBox, "Please fix the highlighted doctor form errors.", "error"); return; }
 
     if (editingDoctorId) {
       const doctor = doctors.find((d) => d.doctorId === editingDoctorId);
       if (!doctor) return;
-
-      doctor.name = name;
-      doctor.specialization = specialization;
-      doctor.license = license;
-      doctor.email = email;
-      doctor.phone = phone;
-      doctor.room = room;
-      doctor.experience = Number(experience);
-      doctor.schedule = schedule;
-
-saveDoctors(doctors);
+      doctor.name = name; doctor.specialization = specialization; doctor.license = license;
+      doctor.email = email; doctor.phone = phone; doctor.room = room;
+      doctor.experience = Number(experience); doctor.schedule = schedule;
+      saveDoctors(doctors);
       setStatusMessage(doctorMessageBox, "Doctor updated successfully.", "success");
     } else {
       const doctorId = generateDoctorId(doctors);
-
-      doctors.push({
-        doctorId,
-        name,
-        specialization,
-        license,
-        email,
-        phone,
-        room,
-        experience: Number(experience),
-        schedule
-      });
-
+      doctors.push({ doctorId, name, specialization, license, email, phone, room, experience: Number(experience), schedule });
       saveDoctors(doctors);
       setStatusMessage(doctorMessageBox, `Doctor created successfully. ID: ${doctorId}`, "success");
     }
@@ -580,18 +473,7 @@ saveDoctors(doctors);
   clearDoctorBtn.addEventListener("click", () => {
     document.getElementById("doctorForm").reset();
     document.getElementById("editingDoctorId").value = "";
-
-    clearFieldErrors([
-      "doctorNameError",
-      "doctorSpecializationError",
-      "doctorLicenseError",
-      "doctorEmailError",
-      "doctorPhoneError",
-      "doctorRoomError",
-      "doctorExperienceError",
-      "doctorScheduleError"
-    ]);
-
+    clearFieldErrors(["doctorNameError","doctorSpecializationError","doctorLicenseError","doctorEmailError","doctorPhoneError","doctorRoomError","doctorExperienceError","doctorScheduleError"]);
     setStatusMessage(doctorMessageBox, "Doctor form cleared.", "default");
   });
 }
@@ -617,7 +499,6 @@ function editDoctor(doctorId) {
 function deleteDoctor(doctorId) {
   const ok = confirm("Are you sure you want to delete this doctor?");
   if (!ok) return;
-
   let doctors = getDoctors();
   doctors = doctors.filter((d) => d.doctorId !== doctorId);
   saveDoctors(doctors);
@@ -636,7 +517,7 @@ function renderDoctors() {
   }
 
   doctors.forEach((doctor) => {
-    doctorTableBody.innerHTML += 
+    doctorTableBody.innerHTML +=
       `<tr>
         <td>${doctor.doctorId}</td>
         <td>${doctor.name}</td>
@@ -653,8 +534,7 @@ function renderDoctors() {
             <button class="action-btn delete" onclick="deleteDoctor('${doctor.doctorId}')">Delete</button>
           </div>
         </td>
-      </tr>
-    `;
+      </tr>`;
   });
 }
 
@@ -663,12 +543,7 @@ function setupStockEventListeners() {
   if (!saveStockBtn || !clearStockBtn) return;
 
   saveStockBtn.addEventListener("click", () => {
-    clearFieldErrors([
-      "stockNameError",
-      "stockTypeError",
-      "stockPriceError",
-      "stockQtyError"
-    ]);
+    clearFieldErrors(["stockNameError","stockTypeError","stockPriceError","stockQtyError"]);
 
     const editingStockId = document.getElementById("editingStockId").value;
     const name = document.getElementById("stockName").value.trim();
@@ -678,55 +553,24 @@ function setupStockEventListeners() {
 
     let hasError = false;
 
-if (name.length < 2) {
-      document.getElementById("stockNameError").textContent = "Enter a valid item name.";
-      hasError = true;
-    }
-
-    if (!type) {
-      document.getElementById("stockTypeError").textContent = "Select item type.";
-      hasError = true;
-    }
-
-    if (price === "" || Number(price) < 0) {
-      document.getElementById("stockPriceError").textContent = "Price must be 0 or more.";
-      hasError = true;
-    }
-
-    if (qty === "" || Number(qty) < 0) {
-      document.getElementById("stockQtyError").textContent = "Stock quantity must be 0 or more.";
-      hasError = true;
-    }
+    if (name.length < 2) { document.getElementById("stockNameError").textContent = "Enter a valid item name."; hasError = true; }
+    if (!type) { document.getElementById("stockTypeError").textContent = "Select item type."; hasError = true; }
+    if (price === "" || Number(price) < 0) { document.getElementById("stockPriceError").textContent = "Price must be 0 or more."; hasError = true; }
+    if (qty === "" || Number(qty) < 0) { document.getElementById("stockQtyError").textContent = "Stock quantity must be 0 or more."; hasError = true; }
 
     let inventory = getInventory();
 
-    if (hasError) {
-      setStatusMessage(stockMessageBox, "Please fix the highlighted stock form errors.", "error");
-      return;
-    }
+    if (hasError) { setStatusMessage(stockMessageBox, "Please fix the highlighted stock form errors.", "error"); return; }
 
     if (editingStockId) {
       const item = inventory.find((i) => i.itemId === editingStockId);
       if (!item) return;
-
-      item.name = name;
-      item.type = type;
-      item.price = Number(price);
-      item.stock = Number(qty);
-
+      item.name = name; item.type = type; item.price = Number(price); item.stock = Number(qty);
       saveInventory(inventory);
       setStatusMessage(stockMessageBox, "Stock item updated successfully.", "success");
     } else {
       const itemId = generateItemId(inventory);
-
-      inventory.push({
-        itemId,
-        name,
-        type,
-        price: Number(price),
-        stock: Number(qty)
-      });
-
+      inventory.push({ itemId, name, type, price: Number(price), stock: Number(qty) });
       saveInventory(inventory);
       setStatusMessage(stockMessageBox, `Stock item created successfully. ID: ${itemId}`, "success");
     }
@@ -740,14 +584,7 @@ if (name.length < 2) {
   clearStockBtn.addEventListener("click", () => {
     document.getElementById("stockForm").reset();
     document.getElementById("editingStockId").value = "";
-
-    clearFieldErrors([
-      "stockNameError",
-      "stockTypeError",
-      "stockPriceError",
-      "stockQtyError"
-    ]);
-
+    clearFieldErrors(["stockNameError","stockTypeError","stockPriceError","stockQtyError"]);
     setStatusMessage(stockMessageBox, "Stock form cleared.", "default");
   });
 }
@@ -756,20 +593,17 @@ function editStock(itemId) {
   const inventory = getInventory();
   const item = inventory.find((i) => i.itemId === itemId);
   if (!item) return;
-
   document.getElementById("editingStockId").value = item.itemId;
   document.getElementById("stockName").value = item.name;
   document.getElementById("stockType").value = item.type;
   document.getElementById("stockPrice").value = item.price;
   document.getElementById("stockQty").value = item.stock;
-
   setStatusMessage(stockMessageBox, `Editing stock item ${item.itemId}`, "warning");
 }
 
 function deleteStock(itemId) {
   const ok = confirm("Are you sure you want to delete this stock item?");
   if (!ok) return;
-
   let inventory = getInventory();
   inventory = inventory.filter((i) => i.itemId !== itemId);
   saveInventory(inventory);
@@ -788,14 +622,11 @@ function renderStock() {
   }
 
   inventory.forEach((item) => {
-    const status =
-      item.type === "MEDICINE"
-        ? Number(item.stock) <= 10
-          ? "Low Stock"
-          : "Available"
-        : "Billable";
+    const status = item.type === "MEDICINE"
+      ? Number(item.stock) <= 10 ? "Low Stock" : "Available"
+      : "Billable";
 
-    stockTableBody.innerHTML += 
+    stockTableBody.innerHTML +=
       `<tr>
         <td>${item.itemId}</td>
         <td>${item.name}</td>
@@ -809,8 +640,7 @@ function renderStock() {
             <button class="action-btn delete" onclick="deleteStock('${item.itemId}')">Delete</button>
           </div>
         </td>
-      </tr>
-    `;
+      </tr>`;
   });
 }
 
@@ -819,22 +649,20 @@ function renderAppointments() {
   const appointments = getAppointments();
   appointmentTableBody.innerHTML = "";
 
-
-if (appointments.length === 0) {
+  if (appointments.length === 0) {
     appointmentTableBody.innerHTML = `<tr><td colspan="5">No appointments found.</td></tr>`;
     return;
   }
 
   appointments.forEach((appointment) => {
-    appointmentTableBody.innerHTML += 
+    appointmentTableBody.innerHTML +=
       `<tr>
         <td>${appointment.appointmentPatient}</td>
         <td>${appointment.doctorName}</td>
         <td>${appointment.appointmentDate}</td>
         <td>${appointment.appointmentTime}</td>
         <td>${appointment.appointmentStatus}</td>
-      </tr>
-    `;
+      </tr>`;
   });
 }
 
@@ -847,15 +675,14 @@ function renderReports() {
     reportInvoiceTableBody.innerHTML = `<tr><td colspan="5">No invoice report data available.</td></tr>`;
   } else {
     invoices.forEach((invoice) => {
-      reportInvoiceTableBody.innerHTML += 
+      reportInvoiceTableBody.innerHTML +=
         `<tr>
           <td>${invoice.invoiceId}</td>
           <td>${invoice.patient}</td>
           <td>${invoice.date}</td>
           <td>${invoice.method}</td>
           <td>Rs. ${Number(invoice.total).toFixed(2)}</td>
-        </tr>
-      `;
+        </tr>`;
     });
   }
 
@@ -876,23 +703,16 @@ function renderRevenueChart(invoices) {
     type: "line",
     data: {
       labels,
-      datasets: [
-        {
-          label: "Revenue",
-          data,
-          borderColor: "#7b6ee6",
-          backgroundColor: "rgba(123, 110, 230, 0.15)",
-          fill: true,
-          tension: 0.35
-        }
-      ]
+      datasets: [{
+        label: "Revenue",
+        data,
+        borderColor: "#0f6fff",
+        backgroundColor: "rgba(15,111,255,0.1)",
+        fill: true,
+        tension: 0.35
+      }]
     },
-    options: {
-      responsive: true,
-      plugins: {
-        legend: { display: true }
-      }
-    }
+    options: { responsive: true, plugins: { legend: { display: true } } }
   });
 }
 
@@ -900,16 +720,9 @@ function renderSalesChart(invoices) {
   const ctx = document.getElementById("salesChart");
   if (!ctx) return;
 
-  const methodCounts = {
-    Cash: 0,
-    Card: 0,
-    Online: 0
-  };
-
+  const methodCounts = { Cash: 0, Card: 0, Online: 0 };
   invoices.forEach((invoice) => {
-    if (methodCounts[invoice.method] !== undefined) {
-      methodCounts[invoice.method] += 1;
-    }
+    if (methodCounts[invoice.method] !== undefined) methodCounts[invoice.method] += 1;
   });
 
   if (salesChart) salesChart.destroy();
@@ -918,63 +731,78 @@ function renderSalesChart(invoices) {
     type: "bar",
     data: {
       labels: Object.keys(methodCounts),
-      datasets: [
-        {
-          label: "Sales Count",
-          data: Object.values(methodCounts),
-          backgroundColor: ["#7b6ee6", "#4f7ef1", "#9f8ff5"]
-        }
-      ]
+      datasets: [{
+        label: "Sales Count",
+        data: Object.values(methodCounts),
+        backgroundColor: ["#0f6fff", "#00c896", "#f59e0b"]
+      }]
     },
-    options: {
-      responsive: true,
-      plugins: {
-        legend: { display: true }
-      }
-    }
+    options: { responsive: true, plugins: { legend: { display: true } } }
   });
 }
 
-/* Employee ID Badge Functions */
+/* ─── EMPLOYEE ID BADGE ──────────────────────────── */
+function getRoleLabel(role) {
+  const map = { ADMIN: "Administrator", RECEPTIONIST: "Receptionist", DOCTOR: "Medical Officer", PHARMACIST: "Pharmacist" };
+  return map[role] || role;
+}
+
+function getDeptLabel(role) {
+  const map = { ADMIN: "Administration", RECEPTIONIST: "Patient Services", DOCTOR: "Medical Department", PHARMACIST: "Pharmacy" };
+  return map[role] || "Staff";
+}
+
+function getRoleColor(role) {
+  const map = { ADMIN: "#f59e0b", RECEPTIONIST: "#00c896", DOCTOR: "#0f6fff", PHARMACIST: "#8b5cf6" };
+  return map[role] || "#0f6fff";
+}
+
 function fillEmployeeBadge(user) {
   const today = new Date();
-  const formattedDate = today.toLocaleDateString("en-US", {
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit"
-  });
+  const formattedDate = today.toLocaleDateString("en-GB", { year: "numeric", month: "long", day: "2-digit" });
+  const expiryDate = new Date(today.getFullYear() + 1, today.getMonth(), today.getDate())
+    .toLocaleDateString("en-GB", { year: "numeric", month: "long", day: "2-digit" });
 
-  // Role to Department Mapping
-  const roleDeptMap = {
-    ADMIN: "Administration",
-    RECEPTIONIST: "Reception",
-    DOCTOR: "Medical",
-    PHARMACIST: "Pharmacy"
-  };
+  const roleColor = getRoleColor(user.role);
+  const roleLabel = getRoleLabel(user.role);
+  const deptLabel = getDeptLabel(user.role);
 
-  document.getElementById("badgeEmployeeId").textContent = user.staffId || "ADM-001";
+  // Top accent bar color
+  document.getElementById("badgeAccentBar").style.background = `linear-gradient(135deg, #0a1628 0%, ${roleColor} 100%)`;
+  document.getElementById("badgeRolePill").style.background = roleColor;
+  document.getElementById("badgeRolePill").textContent = roleLabel;
+
+  document.getElementById("badgeEmployeeId").textContent = user.staffId || "-";
   document.getElementById("badgeEmployeeName").textContent = user.name || "-";
-  document.getElementById("badgeEmployeeRole").textContent = user.role || "-";
-  document.getElementById("badgeEmployeeDept").textContent = roleDeptMap[user.role] || "Staff";
+  document.getElementById("badgeEmployeeRole").textContent = roleLabel;
+  document.getElementById("badgeEmployeeDept").textContent = deptLabel;
   document.getElementById("badgeEmployeePhone").textContent = user.phone || "-";
+  document.getElementById("badgeEmployeeEmail").textContent = user.email || "-";
   document.getElementById("badgeIssuedDate").textContent = formattedDate;
+  document.getElementById("badgeExpiryDate").textContent = expiryDate;
+
+  // Avatar initials
+  const initials = user.name
+    ? user.name.split(" ").map(n => n[0]).join("").slice(0, 2).toUpperCase()
+    : "?";
+  document.getElementById("badgeAvatarInitials").textContent = initials;
+  document.getElementById("badgeAvatarCircle").style.background = `linear-gradient(135deg, ${roleColor}cc, ${roleColor})`;
 }
 
 function printEmployeeIdBadge(user) {
   fillEmployeeBadge(user);
   const printWrap = document.getElementById("printBadgeWrap");
   printWrap.classList.add("show");
-  
-  // Wait for rendering before printing
+
   setTimeout(() => {
     window.print();
-    // Hide after print dialog closes
     setTimeout(() => {
       printWrap.classList.remove("show");
-    }, 500);
-  }, 100);
+    }, 800);
+  }, 150);
 }
 
+/* ─── DOMContentLoaded ───────────────────────────── */
 document.addEventListener("DOMContentLoaded", () => {
   navButtons = document.querySelectorAll(".nav-btn[data-target]");
   sections = document.querySelectorAll(".content-section");
@@ -1000,18 +828,14 @@ document.addEventListener("DOMContentLoaded", () => {
   stockMessageBox = document.getElementById("stockMessageBox");
 
   navButtons.forEach((button) => {
-    button.addEventListener("click", () => {
-      showSection(button.dataset.target);
-    });
+    button.addEventListener("click", () => { showSection(button.dataset.target); });
   });
 
   if (logoutBtn) {
-    logoutBtn.addEventListener("click", () => {
-      window.location.href = "index.html";
-    });
+    logoutBtn.addEventListener("click", () => { window.location.href = "index.html"; });
   }
 
-  /* Modal Event Listeners */
+  /* Modal */
   const printBadgeModal = document.getElementById("printBadgeModal");
   const closePrintBadgeModal = document.getElementById("closePrintBadgeModal");
   const badgeStaffIdInput = document.getElementById("badgeStaffIdInput");
@@ -1029,14 +853,11 @@ document.addEventListener("DOMContentLoaded", () => {
   cancelPrintBadgeBtn.addEventListener("click", closeModal);
 
   badgeStaffIdInput.addEventListener("keypress", (e) => {
-    if (e.key === "Enter") {
-      printBadgeConfirmBtn.click();
-    }
+    if (e.key === "Enter") printBadgeConfirmBtn.click();
   });
 
   printBadgeConfirmBtn.addEventListener("click", () => {
     const staffId = badgeStaffIdInput.value.trim().toUpperCase();
-
     badgeStaffIdError.textContent = "";
 
     if (!staffId) {
@@ -1057,12 +878,10 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   printBadgeModal.addEventListener("click", (e) => {
-    if (e.target === printBadgeModal) {
-      closeModal();
-    }
+    if (e.target === printBadgeModal) closeModal();
   });
 
-setupUserEventListeners();
+  setupUserEventListeners();
   setupDoctorEventListeners();
   setupStockEventListeners();
   populateSpecializations();
