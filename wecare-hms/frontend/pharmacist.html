@@ -441,6 +441,35 @@
         </section>
 
         <!-- Invoices -->
+        <section id="section-doctor-rx" class="content-section">
+          <div class="panel">
+            <div class="panel-header panel-header-space">
+              <div>
+                <h3>Doctor Prescriptions</h3>
+                <p>Prescriptions sent by doctors — load them into POS to process payment</p>
+              </div>
+              <button class="btn btn-secondary" onclick="refreshDoctorRx()" type="button" style="flex-shrink:0;">↻ Refresh</button>
+            </div>
+            <div class="table-wrap">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Rx ID</th>
+                    <th>Patient</th>
+                    <th>Appt ID</th>
+                    <th>Items</th>
+                    <th>Total</th>
+                    <th>Sent At</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="doctorRxTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
         <section id="section-invoices" class="content-section">
           <div class="panel">
             <div class="panel-header panel-header-space">

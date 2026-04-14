@@ -1437,3 +1437,112 @@ function printCurrentLabReport() {
     setTimeout(() => { if (wrap) wrap.style.display = "none"; }, 500);
   }, 100);
 }
+
+/* ================================================================
+   DOCTOR PRESCRIPTIONS — reads from wecare_doctor_rx_queue
+   ================================================================ */
+
+function getDoctorRxQueue() {
+  return JSON.parse(localStorage.getItem("wecare_doctor_rx_queue")) || [];
+}
+
+function saveDoctorRxQueue(data) {
+  localStorage.setItem("wecare_doctor_rx_queue", JSON.stringify(data));
+}
+
+window.refreshDoctorRx = function() {
+  renderDoctorRxTable();
+};
+
+function renderDoctorRxTable() {
+  const tbody = document.getElementById("doctorRxTableBody");
+  if (!tbody) return;
+  const queue = getDoctorRxQueue();
+  tbody.innerHTML = "";
+  if (!queue.length) {
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#94a3b8;padding:24px;">No doctor prescriptions pending.</td></tr>';
+    return;
+  }
+  [...queue].reverse().forEach(rx => {
+    const processed = !!rx.processed;
+    tbody.innerHTML += `
+      <tr>
+        <td style="font-family:monospace;font-size:12px;">${rx.rxId}</td>
+        <td><strong>${rx.patientName}</strong></td>
+        <td style="font-family:monospace;font-size:12px;">${rx.apptId||"—"}</td>
+        <td>${rx.items.length} item(s): ${rx.items.map(i=>i.name).join(", ")}</td>
+        <td>Rs. ${Number(rx.total||0).toFixed(2)}</td>
+        <td style="font-size:11px;">${new Date(rx.createdAt).toLocaleString()}</td>
+        <td><span class="badge ${processed?"badge-completed":"badge-pending"}">${processed?"Processed":"Pending"}</span></td>
+        <td>
+          ${!processed ? `<button class="action-btn edit" onclick="loadDoctorRxIntoCart('${rx.rxId}')">Load to POS</button>` : ""}
+        </td>
+      </tr>`;
+  });
+}
+
+window.loadDoctorRxIntoCart = function(rxId) {
+  const queue = getDoctorRxQueue();
+  const rx = queue.find(r => r.rxId === rxId);
+  if (!rx) return;
+
+  // Find patient details
+  const patients = JSON.parse(localStorage.getItem("wecare_patients")) || [];
+  const patient = patients.find(p => p.patientId === rx.patientId);
+
+  // Build POS cart from rx items
+  cart = rx.items.map(item => ({
+    itemId: item.itemId,
+    name: item.name,
+    type: "MEDICINE",
+    price: Number(item.price || 0),
+    qty: Number(item.qty || 1),
+    note: item.note || item.dosage || "",
+    subtotal: Number(item.price || 0) * Number(item.qty || 1)
+  }));
+
+  // Populate patient fields in POS if they exist
+  const patientSel = document.getElementById("posPatientId");
+  if (patientSel && rx.patientId) {
+    patientSel.value = rx.patientId;
+    patientSel.dispatchEvent(new Event("change"));
+  }
+
+  // Switch to POS section
+  const posBtn = document.querySelector('.nav-btn[data-target="section-pos"]');
+  if (posBtn) posBtn.click();
+
+  // Render cart
+  if (typeof renderCart === "function") renderCart();
+
+  // Mark as loaded
+  const idx = queue.findIndex(r => r.rxId === rxId);
+  if (idx !== -1) {
+    queue[idx].processed = true;
+    queue[idx].processedAt = new Date().toISOString();
+    saveDoctorRxQueue(queue);
+  }
+
+  // Also mark in pos queue
+  const posQueue = JSON.parse(localStorage.getItem("wecare_pos_queue")) || [];
+  const pIdx = posQueue.findIndex(p => p.rxId === rxId);
+  if (pIdx !== -1) { posQueue[pIdx].processed = true; localStorage.setItem("wecare_pos_queue", JSON.stringify(posQueue)); }
+};
+
+/* Hook doctor-rx section into showSection */
+(function() {
+  const origShow = window.showSection;
+  if (typeof origShow === "function") {
+    window.showSection = function(targetId) {
+      origShow(targetId);
+      if (targetId === "section-doctor-rx") renderDoctorRxTable();
+    };
+  }
+})();
+
+/* Auto-render on DOMContentLoaded if section exists */
+document.addEventListener("DOMContentLoaded", function() {
+  if (document.getElementById("doctorRxTableBody")) {
+    renderDoctorRxTable();
+  }
+}, { once: false });
