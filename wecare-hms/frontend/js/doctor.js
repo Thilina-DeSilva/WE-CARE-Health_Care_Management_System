@@ -64,13 +64,31 @@ function clearErrors(ids) { ids.forEach(id => { const e=document.getElementById(
 function getPatientById(id)  { return getPatients().find(p=>p.patientId===id); }
 function getApptById(id)     { return getAppointments().find(a=>a.appointmentId===id); }
 
-/* Detect which doctor is logged in (use first doctor as fallback for demo) */
+/* Detect which doctor is logged in — reads from login session */
 function detectCurrentDoctor() {
   const doctors = getDoctors();
   if (!doctors.length) return null;
-  // In a real system this would come from session. For demo, use DOC-001 or first.
-  const stored = localStorage.getItem("wecare_current_doctor_id");
-  if (stored) return doctors.find(d=>d.doctorId===stored) || doctors[0];
+
+  // Primary: use wecare_current_doctor_id set by login
+  const storedId = localStorage.getItem("wecare_current_doctor_id");
+  if (storedId) {
+    const byId = doctors.find(d => d.doctorId === storedId);
+    if (byId) return byId;
+  }
+
+  // Fallback: check session for name match
+  try {
+    const session = JSON.parse(localStorage.getItem("wecare_session") || "{}");
+    if (session.role === "DOCTOR") {
+      const byName = doctors.find(d => d.name.toLowerCase() === (session.name||"").toLowerCase());
+      if (byName) return byName;
+      // Last fallback: staffId matches doctorId
+      const byStaff = doctors.find(d => d.doctorId === session.staffId);
+      if (byStaff) return byStaff;
+    }
+  } catch(e) {}
+
+  // Demo fallback: first doctor
   return doctors[0];
 }
 

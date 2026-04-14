@@ -313,6 +313,26 @@ function setupUserEventListeners() {
       users.push(newUser);
       saveUsers(users);
 
+      // If the new user is a DOCTOR, also create/link a doctor profile entry
+      if (role === "DOCTOR") {
+        let doctors = getDoctors();
+        const alreadyLinked = doctors.find(d => d.doctorId === staffId);
+        if (!alreadyLinked) {
+          doctors.push({
+            doctorId: staffId,
+            name: name,
+            specialization: "General Medicine",
+            license: "",
+            email: email,
+            phone: phone,
+            room: "",
+            experience: 0,
+            schedule: "Mon-Fri 9AM-5PM"
+          });
+          saveDoctors(doctors);
+        }
+      }
+
       // Keep generated credentials visible — DO NOT reset before showing them
       document.getElementById("generatedStaffId").textContent = staffId;
       document.getElementById("generatedPassword").textContent = tempPassword;
@@ -804,6 +824,17 @@ function printEmployeeIdBadge(user) {
 
 /* ─── DOMContentLoaded ───────────────────────────── */
 document.addEventListener("DOMContentLoaded", () => {
+  // Show logged-in admin name in topbar
+  try {
+    const session = JSON.parse(localStorage.getItem("wecare_session") || "{}");
+    if (session.name) {
+      const ur = document.querySelector(".user-role");
+      const av = document.querySelector(".user-avatar");
+      if (ur) ur.textContent = session.name;
+      if (av) av.textContent = session.name.split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase();
+    }
+  } catch(e) {}
+
   navButtons = document.querySelectorAll(".nav-btn[data-target]");
   sections = document.querySelectorAll(".content-section");
   logoutBtn = document.getElementById("logoutBtn");

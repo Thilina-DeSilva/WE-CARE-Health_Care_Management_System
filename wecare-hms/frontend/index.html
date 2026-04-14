@@ -29,25 +29,25 @@
       <div class="login-card">
         <div class="login-header">
           <h1>WE CARE Staff Login</h1>
-          <p>Select your role and sign in to access your dashboard.</p>
+          <p>Select your role, then enter your Staff ID and password.</p>
         </div>
 
         <div class="role-tabs">
-          <button class="role-btn active" data-role="doctor" type="button">Doctor</button>
-          <button class="role-btn" data-role="pharmacist" type="button">Pharmacist</button>
-          <button class="role-btn" data-role="receptionist" type="button">Receptionist</button>
-          <button class="role-btn" data-role="admin" type="button">Admin</button>
+          <button class="role-btn active" data-role="doctor"       type="button">Doctor</button>
+          <button class="role-btn"        data-role="pharmacist"   type="button">Pharmacist</button>
+          <button class="role-btn"        data-role="receptionist" type="button">Receptionist</button>
+          <button class="role-btn"        data-role="admin"        type="button">Admin</button>
         </div>
 
         <form id="loginForm" class="login-form" novalidate>
           <div class="form-group">
-            <label for="username">Username / Medical ID</label>
-            <input id="username" type="text" placeholder="Enter username or medical ID" />
+            <label for="username">Staff ID</label>
+            <input id="username" type="text" placeholder="e.g. DOC-001, ADM-002, REC-003…" autocomplete="off" />
           </div>
 
           <div class="form-group">
             <label for="password">Password</label>
-            <input id="password" type="password" placeholder="Enter password" />
+            <input id="password" type="password" placeholder="Enter your password" />
           </div>
 
           <div class="login-actions">
@@ -58,13 +58,13 @@
         </form>
 
         <div class="demo-box">
-          <h3>Demo Credentials</h3>
-          <ul>
-            <li><strong>Doctor:</strong> doctor / 123</li>
-            <li><strong>Pharmacist:</strong> pharmacist / 123</li>
-            <li><strong>Receptionist:</strong> receptionist / 123</li>
-            <li><strong>Admin:</strong> admin / 123</li>
+          <h3>Accounts for selected role</h3>
+          <ul id="demoCredentialsList">
+            <li style="color:#94a3b8;">Loading…</li>
           </ul>
+          <p style="margin-top:10px;font-size:11px;color:#94a3b8;">
+            Accounts are created by Admin. Staff ID is the username. Password is the temporary password shown in Admin → User Management.
+          </p>
         </div>
       </div>
     </main>

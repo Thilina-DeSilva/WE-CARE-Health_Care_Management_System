@@ -84,6 +84,18 @@ document.addEventListener("DOMContentLoaded", () => {
   seedDoctorsIfMissing();
   seedPatientsIfMissing();
 
+  // Show logged-in user name in topbar
+  try {
+    const session = JSON.parse(localStorage.getItem("wecare_session") || "{}");
+    if (session.name) {
+      const ur = document.querySelector(".user-role");
+      const av = document.querySelector(".user-avatar");
+      if (ur) ur.textContent = session.name;
+      if (av) av.textContent = session.name.split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase();
+    }
+  } catch(e) {}
+
+
   setupNav();
   setupPatientEvents();
   setupAppointmentEvents();
