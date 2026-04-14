@@ -80,7 +80,7 @@ button, input { font: inherit; }
   height: 200px;
   background:
     linear-gradient(135deg, rgba(10,22,40,0.82) 0%, rgba(15,111,255,0.55) 100%),
-    url("../images/login-bg.jpg") center/cover no-repeat;
+    url("../images/login-bg.png") center/cover no-repeat;
   position: relative;
   overflow: hidden;
   flex-shrink: 0;
